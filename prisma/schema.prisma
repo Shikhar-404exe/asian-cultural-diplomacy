@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("FOUNDER")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  color       String?   @default("#315C85")
+  articles    Article[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Article {
+  id           String       @id @default(uuid())
+  slug         String       @unique
+  title        String
+  subtitle     String?
+  coverImage   String?
+  content      String       // Stored rich HTML from TipTap
+  category     Category     @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  tags         ArticleTag[]
+  author       String       @default("Founder")
+  publishedAt  DateTime?
+  isPublished  Boolean      @default(false)
+  isFeatured   Boolean      @default(false)
+  readingTime  Int          @default(3) // minutes
+  likesCount   Int          @default(0)
+  viewsCount   Int          @default(0)
+  comments     Comment[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model Tag {
+  id       String       @id @default(uuid())
+  name     String       @unique
+  slug     String       @unique
+  articles ArticleTag[]
+}
+
+model ArticleTag {
+  article   Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId String
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     String
+
+  @@id([articleId, tagId])
+}
+
+model Comment {
+  id            String   @id @default(uuid())
+  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId     String
+  authorName    String
+  authorEmail   String?  // Kept strictly private for moderation/abuse management
+  content       String
+  status        String   @default("PENDING") // PENDING, APPROVED, REJECTED, FLAGGED
+  likesCount    Int      @default(0)
+  clientIpHash  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Event {
+  id               String   @id @default(uuid())
+  slug             String   @unique
+  title            String
+  description      String   // Rich or markdown/html overview
+  coverImage       String?
+  startDate        DateTime
+  endDate          DateTime?
+  venue            String
+  city             String
+  country          String
+  speakers         String?  // JSON string or structured list
+  agenda           String?  // JSON string or structured list
+  organizer        String   @default("Asian Cultural Diplomacy")
+  registrationLink String?
+  photographs      String?  // JSON string array of image URLs
+  status           String   @default("UPCOMING") // UPCOMING, ONGOING, COMPLETED, POSTPONED, CANCELLED
+  isFeatured       Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Meetup {
+  id                        String   @id @default(uuid())
+  slug                      String   @unique
+  title                     String
+  description               String
+  date                      DateTime
+  timeWindow                String   // e.g., "14:00 - 16:30 JST"
+  venue                     String
+  city                      String
+  participationInstructions String
+  rsvpLink                  String?
+  status                    String   @default("UPCOMING") // UPCOMING, COMPLETED, CANCELLED
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+}
+
+model ContactEnquiry {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SiteSettings {
+  id                     Int      @id @default(1)
+  siteTitle              String   @default("Asian Cultural Diplomacy")
+  siteTagline            String   @default("Bridging Traditions, Inspiring Global Dialogue")
+  aboutFounderBio        String
+  aboutMission           String
+  aboutVision            String
+  aboutObjectives        String   // Stored as JSON string or multi-paragraph text
+  aboutAreasOfEngagement String   // Stored as JSON string or multi-paragraph text
+  aboutPhilosophy        String
+  contactEmail           String   @default("dialogue@asianculturaldiplomacy.org")
+  socialTwitter          String?
+  socialLinkedin         String?
+  socialYoutube          String?
+  updatedAt              DateTime @updatedAt
+}
+
+model MediaItem {
+  id           String   @id @default(uuid())
+  originalName String
+  fileName     String   @unique
+  fileUrl      String
+  mimeType     String
+  sizeBytes    Int
+  createdAt    DateTime @default(now())
+}

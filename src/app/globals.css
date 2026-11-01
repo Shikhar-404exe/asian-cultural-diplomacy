@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-navy: #142D4E;
+    --brand-blue: #315C85;
+    --brand-sky: #7699B8;
+    --brand-powder: #DCE7EF;
+    --brand-ivory: #F5F1E8;
+    --brand-cream: #E9E1D3;
+    --brand-border: #D5CCBC;
+  }
+
+  body {
+    background-color: var(--brand-ivory);
+    color: #1a202c;
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--brand-navy);
+    font-family: var(--font-serif), "Playfair Display", Georgia, serif;
+    letter-spacing: -0.015em;
+  }
+}
+
+/* Reference-inspired Architectural Grid Lines */
+.bg-architectural-grid {
+  background-size: 60px 60px;
+  background-image: 
+    linear-gradient(to right, rgba(209, 200, 185, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(209, 200, 185, 0.25) 1px, transparent 1px);
+}
+
+.bg-architectural-grid-subtle {
+  background-size: 80px 80px;
+  background-image: 
+    linear-gradient(to right, rgba(220, 231, 239, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(220, 231, 239, 0.35) 1px, transparent 1px);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F5F1E8;
+}
+::-webkit-scrollbar-thumb {
+  background: #7699B8;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #315C85;
+}
+
+/* Prose formatting for TipTap content */
+.prose-editorial {
+  font-size: 1.125rem;
+  line-height: 1.85;
+  color: #2D3748;
+}
+
+.prose-editorial p {
+  margin-bottom: 1.5rem;
+}
+
+.prose-editorial h2 {
+  font-size: 1.875rem;
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-serif), serif;
+  color: #142D4E;
+}
+
+.prose-editorial h3 {
+  font-size: 1.5rem;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--font-serif), serif;
+  color: #142D4E;
+}
+
+.prose-editorial blockquote {
+  border-left: 4px solid #315C85;
+  padding-left: 1.5rem;
+  margin-top: 1.75rem;
+  margin-bottom: 1.75rem;
+  font-style: italic;
+  font-family: var(--font-serif), serif;
+  font-size: 1.25rem;
+  color: #142D4E;
+  background: rgba(220, 231, 239, 0.35);
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.prose-editorial img {
+  border-radius: 0.5rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  max-width: 100%;
+  height: auto;
+  box-shadow: 0 4px 20px rgba(20, 45, 78, 0.08);
+}
+
+.prose-editorial ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.prose-editorial ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}

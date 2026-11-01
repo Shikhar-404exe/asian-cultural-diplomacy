@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+/coverage
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Environment
+.env*.local
+.env
+
+# Database
+prisma/*.db
+prisma/*.db-journal
+
+# Temporary frames & scratch
+.temp_frames/
+.scratch/
+
+# OS
+.DS_Store
+Thumbs.db

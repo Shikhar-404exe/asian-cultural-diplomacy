@@ -11,7 +11,22 @@ import {
   Eye,
   CheckCircle2,
   AlertCircle,
+  Cloud,
+  CloudOff,
+  History,
+  RotateCcw,
+  X,
 } from 'lucide-react';
+
+interface RevisionItem {
+  id: string;
+  revisionNumber: number;
+  title: string;
+  subtitle?: string | null;
+  content: string;
+  createdAt: string;
+  savedBy?: { name: string; email: string } | null;
+}
 
 export default function EditBlogPage() {
   const router = useRouter();
@@ -29,7 +44,16 @@ export default function EditBlogPage() {
   const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Cloud autosave state
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Revisions state
+  const [showRevisions, setShowRevisions] = useState(false);
+  const [revisions, setRevisions] = useState<RevisionItem[]>([]);
+  const [loadingRevisions, setLoadingRevisions] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -47,11 +71,83 @@ export default function EditBlogPage() {
           setContent(a.content);
           setIsPublished(a.isPublished);
           setIsFeatured(a.isFeatured);
+          if (a.lastAutosavedAt) {
+            const date = new Date(a.lastAutosavedAt);
+            setLastSavedTime(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          }
         }
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Server autosave debounced
+  useEffect(() => {
+    if (loading || (!title && !content)) return;
+
+    setSyncStatus('saving');
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/articles/autosave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            articleId: id,
+            title,
+            subtitle,
+            categoryId,
+            coverImage,
+            content,
+            isPublished,
+            isFeatured,
+          }),
+        });
+
+        if (res.ok) {
+          setSyncStatus('saved');
+          const now = new Date();
+          setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+        } else {
+          setSyncStatus('error');
+        }
+      } catch (err) {
+        setSyncStatus('error');
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [id, title, subtitle, categoryId, coverImage, content, isPublished, isFeatured, loading]);
+
+  const loadRevisions = async () => {
+    setLoadingRevisions(true);
+    try {
+      const res = await fetch(`/api/articles/${id}/revisions`);
+      if (res.ok) {
+        const data = await res.json();
+        setRevisions(data.revisions || []);
+      }
+    } catch (err) {
+      console.error('Failed to load revisions:', err);
+    } finally {
+      setLoadingRevisions(false);
+    }
+  };
+
+  const handleOpenRevisions = () => {
+    setShowRevisions(true);
+    loadRevisions();
+  };
+
+  const handleRestoreRevision = (rev: RevisionItem) => {
+    if (window.confirm(`Restore Revision #${rev.revisionNumber} from ${new Date(rev.createdAt).toLocaleString()}? Current unsaved edits will be replaced.`)) {
+      setTitle(rev.title);
+      if (rev.subtitle) setSubtitle(rev.subtitle);
+      setContent(rev.content);
+      setShowRevisions(false);
+      setFeedback({ type: 'success', text: `Restored Revision #${rev.revisionNumber}. Changes will autosave to cloud.` });
+    }
+  };
 
   const handleUpdate = async (publishStatus?: boolean) => {
     if (!title.trim() || !content.trim()) {
@@ -130,13 +226,45 @@ export default function EditBlogPage() {
             <h1 className="font-serif text-2xl font-bold text-brand-navy">
               Edit Article
             </h1>
-            <div className="text-[11px] text-slate-500">
-              Status: <span className="font-semibold text-brand-navy">{isPublished ? 'Published Live' : 'Draft'}</span>
+            <div className="text-[11px] text-slate-500 flex items-center space-x-2 mt-0.5">
+              <span>Status: <strong className="text-brand-navy">{isPublished ? 'Published Live' : 'Draft'}</strong></span>
+              <span>•</span>
+              {syncStatus === 'saving' && (
+                <span className="inline-flex items-center space-x-1 text-brand-blue font-semibold">
+                  <Cloud className="w-3.5 h-3.5 animate-pulse" />
+                  <span>Saving to Cloud...</span>
+                </span>
+              )}
+              {syncStatus === 'saved' && (
+                <span className="inline-flex items-center space-x-1 text-emerald-700 font-semibold">
+                  <Cloud className="w-3.5 h-3.5" />
+                  <span>Saved to Cloud ({lastSavedTime})</span>
+                </span>
+              )}
+              {syncStatus === 'error' && (
+                <span className="inline-flex items-center space-x-1 text-amber-700 font-semibold">
+                  <CloudOff className="w-3.5 h-3.5" />
+                  <span>Offline cache active</span>
+                </span>
+              )}
+              {syncStatus === 'idle' && (
+                <span className="text-slate-400">Synced</span>
+              )}
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleOpenRevisions}
+            className="inline-flex items-center space-x-1.5 px-3 py-2 rounded-full text-xs font-semibold bg-brand-ivory text-brand-navy border border-brand-border hover:bg-brand-powder/50 transition-colors"
+            title="View Version History"
+          >
+            <History className="w-3.5 h-3.5 text-brand-blue" />
+            <span>Revisions</span>
+          </button>
+
           <button
             type="button"
             onClick={() => setPreviewMode(!previewMode)}
@@ -150,7 +278,7 @@ export default function EditBlogPage() {
             type="button"
             onClick={() => handleUpdate(false)}
             disabled={saving}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-brand-cream border border-brand-border text-slate-800"
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-brand-cream border border-brand-border text-slate-800 hover:bg-brand-powder/60 transition-colors disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
             <span>Save Draft</span>
@@ -160,7 +288,7 @@ export default function EditBlogPage() {
             type="button"
             onClick={() => handleUpdate(true)}
             disabled={saving}
-            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-brand-blue text-brand-ivory hover:bg-brand-navy"
+            className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-brand-blue text-brand-ivory hover:bg-brand-navy transition-colors disabled:opacity-50"
           >
             <Globe className="w-3.5 h-3.5" />
             <span>{isPublished ? 'Save & Keep Live' : 'Publish Live'}</span>
@@ -221,23 +349,23 @@ export default function EditBlogPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-brand-ivory border border-brand-border font-serif text-lg font-bold text-brand-navy"
+                className="w-full px-4 py-3 rounded-xl bg-brand-ivory border border-brand-border focus:outline-none focus:ring-2 focus:ring-brand-blue/40 font-serif text-lg font-bold text-brand-navy"
               />
             </div>
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
-                Subtitle
+                Subtitle / Summary
               </label>
               <input
                 type="text"
                 value={subtitle}
                 onChange={(e) => setSubtitle(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl bg-brand-ivory border border-brand-border text-sm"
+                className="w-full px-4 py-2.5 rounded-xl bg-brand-ivory border border-brand-border focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
                   Category
@@ -245,7 +373,7 @@ export default function EditBlogPage() {
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -263,20 +391,20 @@ export default function EditBlogPage() {
                   type="text"
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border text-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
                 />
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 pt-2">
+            <div className="pt-2 flex items-center space-x-2.5">
               <input
-                id="isFeaturedCheck"
+                id="editFeaturedCheck"
                 type="checkbox"
                 checked={isFeatured}
                 onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 text-brand-blue rounded border-brand-border"
+                className="w-4 h-4 text-brand-blue rounded border-brand-border focus:ring-brand-blue"
               />
-              <label htmlFor="isFeaturedCheck" className="text-xs font-semibold text-brand-navy cursor-pointer">
+              <label htmlFor="editFeaturedCheck" className="text-xs font-semibold text-brand-navy cursor-pointer">
                 Highlight as Featured Perspective on Homepage
               </label>
             </div>
@@ -284,12 +412,83 @@ export default function EditBlogPage() {
 
           <div className="space-y-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy">
-              Article Content & Body
+              Content &amp; Body
             </label>
             <TipTapEditor
               content={content}
               onChange={(newHtml) => setContent(newHtml)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Revisions History Modal */}
+      {showRevisions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-brand-ivory rounded-2xl border border-brand-border max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-5 border-b border-brand-border/60 flex items-center justify-between bg-brand-cream/60">
+              <div className="flex items-center space-x-2">
+                <History className="w-5 h-5 text-brand-navy" />
+                <h3 className="font-serif font-bold text-lg text-brand-navy">
+                  Version History &amp; Revisions
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowRevisions(false)}
+                className="p-1 rounded-lg text-slate-500 hover:bg-brand-powder/50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              {loadingRevisions ? (
+                <div className="py-12 text-center text-sm text-slate-500">
+                  Loading previous drafts...
+                </div>
+              ) : revisions.length === 0 ? (
+                <div className="py-12 text-center text-sm text-slate-500">
+                  No previous revisions recorded yet. Revisions are captured automatically as you write.
+                </div>
+              ) : (
+                revisions.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-4 rounded-xl border border-brand-border/80 bg-brand-cream/40 flex items-center justify-between gap-4"
+                  >
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-xs bg-brand-navy text-brand-ivory px-2 py-0.5 rounded">
+                          Rev #{rev.revisionNumber}
+                        </span>
+                        <span className="font-semibold text-sm text-brand-navy">
+                          {rev.title}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-1">
+                        Saved {new Date(rev.createdAt).toLocaleString()} by {rev.savedBy?.name || 'Administrator'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRestoreRevision(rev)}
+                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-brand-ivory border border-brand-border text-brand-blue hover:bg-brand-powder/50 text-xs font-semibold shrink-0"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Restore</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="p-4 border-t border-brand-border/60 bg-brand-cream/40 text-right">
+              <button
+                onClick={() => setShowRevisions(false)}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-brand-navy text-brand-ivory hover:bg-brand-blue"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

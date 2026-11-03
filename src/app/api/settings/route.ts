@@ -21,6 +21,12 @@ export async function GET() {
           aboutObjectives: '[]',
           aboutAreasOfEngagement: '[]',
           aboutPhilosophy: 'Cultural diplomacy is an invitation to shared reflection.',
+          gmailNotificationsEnabled: true,
+          gmailUser: process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org',
+          notifyOnNewComment: true,
+          notifyOnNewReader: true,
+          notifyOnNewEnquiry: true,
+          notifyOnFlaggedComment: true,
         },
       });
     }
@@ -55,6 +61,11 @@ export async function PUT(req: NextRequest) {
       socialYoutube,
       currentPassword,
       newPassword,
+      gmailNotificationsEnabled,
+      notificationEmail,
+      notifyOnNewComment,
+      notifyOnNewReader,
+      notifyOnContactEnquiry,
     } = body;
 
     // Optional password change
@@ -63,15 +74,16 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: 'Current password is required to set a new password' }, { status: 400 });
       }
 
-      const adminUser = await prisma.adminUser.findUnique({
-        where: { id: session.userId },
-      });
+      // Check User table first, then fallback to AdminUser
+      let user = await prisma.user.findUnique({ where: { id: session.userId } });
+      let adminUser = await prisma.adminUser.findUnique({ where: { id: session.userId } });
 
-      if (!adminUser) {
-        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      const existingHash = user?.passwordHash || adminUser?.passwordHash;
+      if (!existingHash) {
+        return NextResponse.json({ error: 'User record not found' }, { status: 404 });
       }
 
-      const isCurrentValid = await bcrypt.compare(currentPassword, adminUser.passwordHash);
+      const isCurrentValid = await bcrypt.compare(currentPassword, existingHash);
       if (!isCurrentValid) {
         return NextResponse.json({ error: 'Current password incorrect' }, { status: 400 });
       }
@@ -81,10 +93,19 @@ export async function PUT(req: NextRequest) {
       }
 
       const newHash = await bcrypt.hash(newPassword, 12);
-      await prisma.adminUser.update({
-        where: { id: session.userId },
-        data: { passwordHash: newHash },
-      });
+      
+      if (user) {
+        await prisma.user.update({
+          where: { id: session.userId },
+          data: { passwordHash: newHash },
+        });
+      }
+      if (adminUser) {
+        await prisma.adminUser.update({
+          where: { id: session.userId },
+          data: { passwordHash: newHash },
+        });
+      }
     }
 
     const dataToUpdate: any = {};
@@ -100,6 +121,14 @@ export async function PUT(req: NextRequest) {
     if (socialTwitter !== undefined) dataToUpdate.socialTwitter = socialTwitter;
     if (socialLinkedin !== undefined) dataToUpdate.socialLinkedin = socialLinkedin;
     if (socialYoutube !== undefined) dataToUpdate.socialYoutube = socialYoutube;
+    if (gmailNotificationsEnabled !== undefined) dataToUpdate.gmailNotificationsEnabled = gmailNotificationsEnabled;
+    if (notificationEmail !== undefined) dataToUpdate.gmailUser = notificationEmail;
+    if (body.gmailUser !== undefined) dataToUpdate.gmailUser = body.gmailUser;
+    if (notifyOnNewComment !== undefined) dataToUpdate.notifyOnNewComment = notifyOnNewComment;
+    if (notifyOnNewReader !== undefined) dataToUpdate.notifyOnNewReader = notifyOnNewReader;
+    if (notifyOnContactEnquiry !== undefined) dataToUpdate.notifyOnNewEnquiry = notifyOnContactEnquiry;
+    if (body.notifyOnNewEnquiry !== undefined) dataToUpdate.notifyOnNewEnquiry = body.notifyOnNewEnquiry;
+    if (body.notifyOnFlaggedComment !== undefined) dataToUpdate.notifyOnFlaggedComment = body.notifyOnFlaggedComment;
 
     const settings = await prisma.siteSettings.upsert({
       where: { id: 1 },

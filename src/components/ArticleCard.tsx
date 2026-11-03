@@ -148,3 +148,4 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
     </article>
   );
 }
+

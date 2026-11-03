@@ -81,3 +81,4 @@ For high-scale public traffic:
 - **Automated Daily Backups**: Enable point-in-time recovery on the PostgreSQL database with 30-day retention.
 - **Weekly Snapshot**: Download the JSON data export from `/admin/settings` and archive to an offline encrypted drive.
 - **Disaster Recovery**: Documented recovery time objective (RTO) of < 30 minutes using the automated Prisma seed/migration pipeline.
+

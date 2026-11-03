@@ -65,3 +65,4 @@ This document provides a comprehensive inventory of all visual and audiovisual a
   6. High-impact Manifesto banner with prominent editorial statement.
   7. Clear engagement tiers / RSVP cards with circular buttons.
   8. Elegant dark navy footer with cultural multilingual touches and structured links.
+

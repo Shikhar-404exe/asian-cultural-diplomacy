@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { validateImageUpload } from '@/lib/security';
+import { uploadFile, deleteFile, getStorageProvider } from '@/lib/storage';
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getAdminSession();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Administrator privileges required' }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -34,13 +34,10 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(bytes);
 
     const ext = path.extname(file.name).toLowerCase();
-    const safeName = `acd_${Date.now()}_${crypto.randomBytes(4).toString('hex')}${ext}`;
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-    const filePath = path.join(uploadDir, safeName);
+    const safeName = `acd_${Date.now()}_${crypto.randomBytes(6).toString('hex')}${ext}`;
 
-    await writeFile(filePath, buffer);
-
-    const fileUrl = `/uploads/${safeName}`;
+    // Upload via storage abstraction (Supabase Storage in cloud / local in dev)
+    const { url: fileUrl, provider } = await uploadFile(buffer, safeName, file.type);
 
     const mediaItem = await prisma.mediaItem.create({
       data: {
@@ -55,6 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       url: fileUrl,
+      provider,
       media: mediaItem,
     });
   } catch (error) {
@@ -73,9 +71,53 @@ export async function GET() {
     const media = await prisma.mediaItem.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return NextResponse.json({ media });
+    
+    return NextResponse.json({
+      media,
+      activeProvider: getStorageProvider(),
+    });
   } catch (error) {
     console.error('Media fetch error:', error);
     return NextResponse.json({ error: 'Failed to fetch media' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await getAdminSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Media ID is required' }, { status: 400 });
+    }
+
+    const mediaItem = await prisma.mediaItem.findUnique({
+      where: { id },
+    });
+
+    if (!mediaItem) {
+      return NextResponse.json({ error: 'Media not found' }, { status: 404 });
+    }
+
+    // Delete from underlying storage
+    await deleteFile(mediaItem.fileUrl);
+
+    // Remove from database
+    await prisma.mediaItem.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Media deleted successfully from storage and catalog.',
+    });
+  } catch (error) {
+    console.error('Media deletion error:', error);
+    return NextResponse.json({ error: 'Failed to delete media' }, { status: 500 });
   }
 }

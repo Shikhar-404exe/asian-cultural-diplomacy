@@ -219,11 +219,23 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {latestArticles.map((art) => (
-              <ArticleCard key={art.id} article={art} />
-            ))}
-          </div>
+          {latestArticles.length === 0 ? (
+            <div className="text-center py-12 px-4 rounded-2xl bg-brand-ivory border border-dashed border-brand-border text-slate-600 font-sans max-w-2xl mx-auto">
+              <BookOpen className="w-8 h-8 text-brand-sky mx-auto mb-3 opacity-70" />
+              <h3 className="font-serif text-lg font-bold text-brand-navy mb-1">
+                Editorial Essays Forthcoming
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500">
+                The founder is currently drafting inaugural publications on intercultural statecraft and heritage preservation.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {latestArticles.map((art) => (
+                <ArticleCard key={art.id} article={art} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -327,11 +339,23 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {upcomingEvents.map((ev) => (
-              <EventCard key={ev.id} event={ev} />
-            ))}
-          </div>
+          {upcomingEvents.length === 0 ? (
+            <div className="text-center py-12 px-4 rounded-2xl bg-brand-ivory border border-dashed border-brand-border text-slate-600 font-sans max-w-2xl mx-auto">
+              <Calendar className="w-8 h-8 text-brand-sky mx-auto mb-3 opacity-70" />
+              <h3 className="font-serif text-lg font-bold text-brand-navy mb-1">
+                Forthcoming Symposia
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500">
+                New international cultural forums and academic conferences will be announced here soon.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {upcomingEvents.map((ev) => (
+                <EventCard key={ev.id} event={ev} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -359,11 +383,23 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {upcomingMeetups.map((m) => (
-            <MeetupCard key={m.id} meetup={m} />
-          ))}
-        </div>
+        {upcomingMeetups.length === 0 ? (
+          <div className="text-center py-12 px-4 rounded-2xl bg-brand-cream/50 border border-dashed border-brand-border text-slate-600 font-sans max-w-2xl mx-auto">
+            <Users className="w-8 h-8 text-brand-sky mx-auto mb-3 opacity-70" />
+            <h3 className="font-serif text-lg font-bold text-brand-navy mb-1">
+              Public Appearances in Scheduling
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500">
+              The founder will post confirmed university visits, cultural festivals, and public salon dates as itineraries are finalized.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {upcomingMeetups.map((m) => (
+              <MeetupCard key={m.id} meetup={m} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* 8. MANIFESTO CALLOUT BANNER (Neo Mirai Reference Feature) */}
@@ -435,3 +471,4 @@ export default async function HomePage() {
     </div>
   );
 }
+

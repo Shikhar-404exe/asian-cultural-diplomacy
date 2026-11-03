@@ -86,3 +86,4 @@ To access the platform from smartphones or tablets connected to the same trusted
   Copy-Item dev.db "dev_backup_$(Get-Date -Format 'yyyyMMdd_HHmm').db"
   ```
   Or use the **Download Database Snapshot (.JSON)** button in the Founder Dashboard Settings.
+

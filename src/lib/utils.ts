@@ -17,6 +17,8 @@ export function slugify(text: string): string {
     .replace(/-+$/, '');         // Trim - from end of text
 }
 
+export const generateSlug = slugify;
+
 export function formatDate(date: Date | string | number | null | undefined): string {
   if (!date) return '';
   const d = new Date(date);
@@ -47,3 +49,4 @@ export function estimateReadingTime(content: string): number {
   const wordsPerMinute = 200;
   return Math.max(1, Math.ceil(words / wordsPerMinute));
 }
+

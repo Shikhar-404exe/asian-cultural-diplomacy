@@ -3,31 +3,50 @@ node_modules/
 .pnp
 .pnp.js
 
-# Testing
+# Testing & Reports
 /coverage
 test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
 
-# Next.js
+# Next.js Build Outputs
 .next/
 out/
 build/
 dist/
+.vercel/
 
-# Environment
+# Environment Files (Keep .env.example only)
 .env*.local
 .env
+.env.production
+.env.staging
 
-# Database
+# Local Databases, Journals & Snapshots
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
 prisma/*.db
 prisma/*.db-journal
+prisma/*.db-shm
+prisma/*.db-wal
 
-# Temporary frames & scratch
+# Local Backups & Data Dumps
+backups/
+*.dump
+*.sql
+
+# Temporary frames, logs & scratch
 .temp_frames/
 .scratch/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# OS
+# OS Generated Files
 .DS_Store
 Thumbs.db
+desktop.ini

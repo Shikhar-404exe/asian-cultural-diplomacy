@@ -96,11 +96,28 @@ export async function POST(req: NextRequest) {
         isFeatured: Boolean(isFeatured),
         readingTime,
         publishedAt: isPublished ? new Date() : null,
+        lastAutosavedAt: new Date(),
       },
       include: {
         category: true,
       },
     });
+
+    // Record initial revision
+    try {
+      await prisma.articleRevision.create({
+        data: {
+          articleId: article.id,
+          revisionNumber: 1,
+          title: article.title,
+          subtitle: article.subtitle,
+          content: article.content,
+          savedById: session.userId,
+        },
+      });
+    } catch (revErr) {
+      console.warn('Initial revision creation warning:', revErr);
+    }
 
     return NextResponse.json({ success: true, article }, { status: 201 });
   } catch (error) {
@@ -108,3 +125,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create article' }, { status: 500 });
   }
 }
+

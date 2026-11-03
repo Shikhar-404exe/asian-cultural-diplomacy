@@ -53,3 +53,4 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete comment' }, { status: 500 });
   }
 }
+

@@ -68,3 +68,4 @@ Unlike generic blogging engines or corporate NGO websites, the Asian Cultural Di
 ## Accessibility & Inclusion
 
 Targeting WCAG 2.1 AA compliance with high-contrast text ratios (> 11:1 for navy on ivory), keyboard focus indicators, screen-reader semantic landmarks, and full touch-target sizing (min 44px) across mobile viewports.
+

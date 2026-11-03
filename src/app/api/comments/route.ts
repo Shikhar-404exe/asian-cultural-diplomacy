@@ -1,19 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getAdminSession } from '@/lib/auth';
+import { getAdminSession, getSession } from '@/lib/auth';
 import { checkRateLimit, sanitizePlainText, hashClientIp } from '@/lib/security';
+import { notifyNewComment } from '@/lib/notifications';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const articleId = searchParams.get('articleId');
 
+    // Admin can inspect moderation queues with status filtering
+    const adminSession = await getAdminSession();
+    if (!adminSession) {
+      // Public / Reader endpoint: only return APPROVED comments for an article
+      if (!articleId) {
+        return NextResponse.json({ error: 'Article ID required' }, { status: 400 });
+      }
+
+      const comments = await prisma.comment.findMany({
+        where: {
+          articleId,
+          status: 'APPROVED',
+        },
+        select: {
+          id: true,
+          authorName: true,
+          content: true,
+          createdAt: true,
+          likesCount: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return NextResponse.json({ comments });
+    }
+
+    // Admin view
     const where: any = {};
     if (status && status !== 'ALL') {
       where.status = status;
@@ -27,6 +50,9 @@ export async function GET(req: NextRequest) {
       include: {
         article: {
           select: { id: true, title: true, slug: true },
+        },
+        user: {
+          select: { id: true, name: true, email: true, role: true },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -42,7 +68,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-    const rateCheck = checkRateLimit(`comment_${ip}`, 5, 5 * 60 * 1000); // 5 per 5 mins
+    const rateCheck = checkRateLimit(`comment_${ip}`, 8, 5 * 60 * 1000); // 8 per 5 mins
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: 'You are submitting comments too quickly. Please pause before trying again.' },
@@ -50,38 +76,38 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Enforce authentication requirement
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Please sign in or register to join this dialogue and contribute your perspective.' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
-    const { articleId, authorName, authorEmail, content, honeypot } = body;
+    const { articleId, content, honeypot } = body;
 
     // Honeypot bot protection
     if (honeypot) {
-      // Spam bot detected silently
       return NextResponse.json(
         { success: true, message: 'Your comment has been received.' },
         { status: 200 }
       );
     }
 
-    if (!articleId || !authorName || !content) {
+    if (!articleId || !content) {
       return NextResponse.json(
-        { error: 'Please provide your name and comment message.' },
+        { error: 'Please provide your comment message.' },
         { status: 400 }
       );
     }
 
-    const cleanName = sanitizePlainText(authorName);
     const cleanContent = sanitizePlainText(content);
 
-    if (cleanName.length < 2 || cleanName.length > 70) {
+    if (cleanContent.length < 3 || cleanContent.length > 2500) {
       return NextResponse.json(
-        { error: 'Name must be between 2 and 70 characters.' },
-        { status: 400 }
-      );
-    }
-
-    if (cleanContent.length < 5 || cleanContent.length > 2000) {
-      return NextResponse.json(
-        { error: 'Comment must be between 5 and 2000 characters.' },
+        { error: 'Comment must be between 3 and 2500 characters.' },
         { status: 400 }
       );
     }
@@ -95,20 +121,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Article not found.' }, { status: 404 });
     }
 
+    // Role-based status: Founder admin comments are automatically approved; readers are queued for civility review
+    const commentStatus = session.role === 'ADMIN' ? 'APPROVED' : 'PENDING';
+
     const comment = await prisma.comment.create({
       data: {
         articleId: article.id,
-        authorName: cleanName,
-        authorEmail: authorEmail ? String(authorEmail).slice(0, 100) : null,
+        userId: session.userId,
+        authorName: session.name,
+        authorEmail: session.email,
         content: cleanContent,
-        status: 'PENDING', // Mandatory moderation queue
+        status: commentStatus,
         clientIpHash: hashClientIp(ip),
       },
     });
 
+    // Notify founder asynchronously
+    notifyNewComment(article.title, session.name, cleanContent, comment.id).catch(err => {
+      console.warn('Comment notification error:', err?.message || err);
+    });
+
     return NextResponse.json({
       success: true,
-      message: 'Thank you! Your comment has been submitted and is pending review by the founder.',
+      message: session.role === 'ADMIN' 
+        ? 'Your editorial comment has been published.' 
+        : 'Thank you! Your perspective has been received and is pending review by the founder.',
       comment: {
         id: comment.id,
         authorName: comment.authorName,

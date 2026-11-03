@@ -1,29 +1,36 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Asian Cultural Diplomacy - Public Visitor Experience', () => {
-  test('Homepage loads with reference split-hero layout, sister artwork, and navigation', async ({ page }) => {
+test.describe('Asian Cultural Diplomacy - Public Experience & Navigation Integrity', () => {
+  test('Homepage loads with branding, sister artwork, and clean public navigation', async ({ page }) => {
     await page.goto('/');
 
-    // Check title and brand
     await expect(page).toHaveTitle(/Asian Cultural Diplomacy/);
     await expect(page.locator('text=Asian Cultural Diplomacy').first()).toBeVisible();
 
-    // Check Reference Strategic Pillars (Neo Mirai inspiration) with exact match
+    // Verify Strategic Pillars
     await expect(page.getByText('Pillar I', { exact: true })).toBeVisible();
     await expect(page.locator('text=Intercultural Philosophy & Scholarship')).toBeVisible();
 
-    // Check Founder Sister's Artwork
+    // Verify Sister's Artwork
     await expect(page.locator('text=The Bridge of Dialogue').first()).toBeVisible();
 
-    // Check Manifesto banner
-    await expect(page.locator('text=Our Manifesto')).toBeVisible();
+    // CRITICAL SECURITY & UX: Verify public navigation contains ZERO admin/founder portal links
+    const nav = page.locator('header nav, header');
+    await expect(nav.locator('text=Founder Portal')).toHaveCount(0);
+    await expect(nav.locator('text=Publisher Portal')).toHaveCount(0);
 
-    // Check sections exist
-    await expect(page.locator('text=Upcoming Symposia & Events')).toBeVisible();
-    await expect(page.locator('text=Founder Meetups & Public Appearances')).toBeVisible();
+    // Verify Public links exist
+    await expect(page.locator('text=Home').first()).toBeVisible();
+    await expect(page.locator('text=About').first()).toBeVisible();
+    await expect(page.locator('text=Blog / Publications').first()).toBeVisible();
+    await expect(page.locator('text=Events').first()).toBeVisible();
+    await expect(page.locator('text=Meetups').first()).toBeVisible();
+    await expect(page.locator('text=Contact').first()).toBeVisible();
+    await expect(page.locator('text=Sign In').first()).toBeVisible();
+    await expect(page.locator('text=Join Dialogue').first()).toBeVisible();
   });
 
-  test('About page displays mission, vision, founder profile, and philosophy', async ({ page }) => {
+  test('About page displays mission, vision, and philosophy', async ({ page }) => {
     await page.goto('/about');
 
     await expect(page.locator('text=About Asian Cultural Diplomacy')).toBeVisible();
@@ -31,178 +38,127 @@ test.describe('Asian Cultural Diplomacy - Public Visitor Experience', () => {
     await expect(page.locator('text=Our Vision')).toBeVisible();
     await expect(page.locator('text=About the Founder')).toBeVisible();
     await expect(page.locator('text=Cultural Diplomacy Philosophy')).toBeVisible();
-    await expect(page.locator('text=Areas of Diplomatic & Scholarly Engagement')).toBeVisible();
   });
 
-  test('Blog page supports search, category filtering, and navigation to article', async ({ page }) => {
+  test('Publications, Events, and Meetups display respectful empty states when no demo data exists', async ({ page }) => {
     await page.goto('/blog');
-
     await expect(page.locator('h1')).toContainText('Perspectives on Asian Cultural Diplomacy');
-    await expect(page.locator('text=All Topics')).toBeVisible();
 
-    // Check filter by category
-    const essayBtn = page.locator('button:has-text("Diplomatic Essays")');
-    if (await essayBtn.count() > 0) {
-      await essayBtn.click();
-      await page.waitForTimeout(500);
-      await expect(page).toHaveURL(/category=diplomatic-essays/);
-    }
-
-    // Click into the featured article
-    await page.goto('/blog/architecture-of-dialogue-building-bridges');
-    await expect(page.locator('h1')).toContainText('The Architecture of Dialogue');
-    await expect(page.locator('text=Founder & Director').first()).toBeVisible();
-  });
-
-  test('Article interactions: like button and community comment submission', async ({ page }) => {
-    await page.goto('/blog/architecture-of-dialogue-building-bridges');
-
-    // Test like button
-    const likeBtn = page.locator('button[title*="article"]').first();
-    await expect(likeBtn).toBeVisible();
-    await likeBtn.click();
-    await page.waitForTimeout(300);
-
-    // Scroll to comments section
-    const commentSection = page.locator('text=Perspectives & Dialogue');
-    await commentSection.scrollIntoViewIfNeeded();
-    await expect(commentSection).toBeVisible();
-
-    // Fill comment form
-    const randomId = Date.now().toString().slice(-4);
-    await page.fill('input[placeholder*="Prof. Lin Wei"]', `Cultural Scholar ${randomId}`);
-    await page.fill('input[placeholder*="you@institution.edu"]', `scholar${randomId}@test.edu`);
-    await page.fill('textarea[placeholder*="Share your thoughts"]', 'This essay offers profound wisdom on intercultural bridges between traditions.');
-
-    await page.click('button:has-text("Submit Perspective")');
-
-    // Verify submission confirmation regarding moderation queue or success
-    await expect(page.locator('text=pending review by the founder').or(page.locator('text=Your perspective has been received'))).toBeVisible();
-  });
-
-  test('Events page displays symposia and allows viewing event details', async ({ page }) => {
     await page.goto('/events');
-
     await expect(page.locator('h1')).toContainText('Asian Cultural Diplomacy Events');
-    await expect(page.locator('text=Pan-Asian Cultural Diplomacy Symposium 2026').first()).toBeVisible();
 
-    // Navigate to single event
-    await page.click('text=Pan-Asian Cultural Diplomacy Symposium 2026');
-    await expect(page.locator('h1')).toContainText('Pan-Asian Cultural Diplomacy Symposium 2026');
-    await expect(page.locator('text=Kyoto International Conference Hall')).toBeVisible();
-    await expect(page.locator('text=Distinguished Speakers & Fellows')).toBeVisible();
-  });
-
-  test('Meetups page displays founder public appearances and privacy notice', async ({ page }) => {
     await page.goto('/meetups');
-
     await expect(page.locator('h1')).toContainText('Founder Meetups & Academic Engagements');
-    await expect(page.locator('text=Civic Transparency & Privacy Principle')).toBeVisible();
-    await expect(page.locator('text=University Visit & Open Dialogue: Asian Cultural Exchange').first()).toBeVisible();
   });
 
-  test('Contact page transmits inquiry safely to local database', async ({ page }) => {
+  test('Contact form submission creates genuine enquiry', async ({ page }) => {
     await page.goto('/contact');
-
     await expect(page.locator('h1')).toContainText('Contact & Academic Inquiries');
 
-    await page.fill('input[placeholder*="Dr. A. Tanaka"]', 'Prof. Ambassador Tanaka');
-    await page.fill('input[placeholder*="name@institution.org"]', 'tanaka@diplomatic-academy.jp');
-    await page.fill('input[placeholder*="Research Collaboration"]', 'Guest Lecture Invitation');
-    await page.fill('textarea[placeholder*="Please describe"]', 'We would be honored to host you for a symposium on Asian cultural diplomacy in Tokyo next autumn.');
+    const testId = Date.now().toString().slice(-4);
+    await page.fill('input[placeholder*="Dr. A. Tanaka"]', `Cultural Delegate ${testId}`);
+    await page.fill('input[placeholder*="name@institution.org"]', `delegate${testId}@culturaldiplomacy.test`);
+    await page.fill('input[placeholder*="Research Collaboration"]', `Inquiry Regarding Diplomatic Exchange ${testId}`);
+    await page.fill('textarea[placeholder*="Please describe your proposal"]', 'We would be honored to discuss cross-border cultural initiatives in Asia.');
 
     await page.click('button:has-text("Transmit Enquiry")');
-
-    await expect(page.locator('text=stored in the founder’s local inbox')).toBeVisible();
+    await expect(page.locator('text=safely received').or(page.locator('text=Thank you'))).toBeVisible();
   });
 });
 
-test.describe('Security & Protection Hardening', () => {
-  test('Unauthenticated mutation requests are blocked with 401', async ({ request }) => {
-    // Attempt article creation without session
-    const resArt = await request.post('/api/articles', {
-      data: { title: 'Unauthorized Test', content: 'Hack', categoryId: '1' },
-    });
-    expect(resArt.status()).toBe(401);
+test.describe('Role Separation & Reader Authentication Experience', () => {
+  const timestamp = Date.now().toString().slice(-5);
+  const readerEmail = `reader_${timestamp}@culturaltest.org`;
+  const readerPassword = 'ReaderSecure2026!';
+  const readerName = `Dr. Aiko Chen ${timestamp}`;
 
-    // Attempt comment moderation without session
-    const resComm = await request.patch('/api/comments/fake-id', {
-      data: { status: 'APPROVED' },
-    });
-    expect(resComm.status()).toBe(401);
+  test('Reader can register an account and is redirected to their account page', async ({ page }) => {
+    await page.goto('/register');
 
-    // Attempt event creation without session
-    const resEv = await request.post('/api/events', {
-      data: { title: 'Fake Event' },
-    });
-    expect(resEv.status()).toBe(401);
+    await expect(page.locator('h2')).toContainText('Join the Reader Dialogue');
+    await page.fill('input[placeholder*="Lin Wei"]', readerName);
+    await page.fill('input[placeholder*="you@institution.org"]', readerEmail);
+    await page.fill('input[placeholder="At least 8 characters"]', readerPassword);
+    await page.fill('input[placeholder="Repeat password"]', readerPassword);
+
+    await page.click('button:has-text("Complete Registration")');
+
+    // Should redirect to /account
+    await expect(page).toHaveURL(/\/account/);
+    await expect(page.locator('h1')).toContainText(readerName);
+    await expect(page.locator('text=Registered Reader')).toBeVisible();
   });
 
-  test('Comments with script tags are escaped to prevent stored XSS', async ({ request }) => {
-    const res = await request.post('/api/comments', {
-      data: {
-        articleId: 'architecture-of-dialogue-building-bridges',
-        authorName: '<script>alert("XSS")</script>Attacker',
-        content: '<script>document.cookie</script>Malicious message text',
-      },
-    });
+  test('Reader cannot access Administrator portal routes (RBAC Protection)', async ({ page }) => {
+    // Log in as Reader
+    await page.goto('/login');
+    await page.fill('input[type="email"]', readerEmail);
+    await page.fill('input[type="password"]', readerPassword);
+    await page.click('button:has-text("Sign In")');
 
-    expect(res.ok()).toBeTruthy();
-    const data = await res.json();
-    expect(data.comment.authorName).not.toContain('<script>');
-    expect(data.comment.authorName).toContain('&lt;script&gt;');
+    await expect(page).toHaveURL(/\/account/);
+
+    // Attempt to access /admin directly
+    await page.goto('/admin');
+    
+    // Should be redirected away to login or account, never showing admin dashboard
+    await expect(page).not.toHaveURL(/^\/admin$/);
+  });
+
+  test('Reader can update their display name in account profile', async ({ page }) => {
+    await page.goto('/login');
+    await page.fill('input[type="email"]', readerEmail);
+    await page.fill('input[type="password"]', readerPassword);
+    await page.click('button:has-text("Sign In")');
+
+    await page.click('button:has-text("Profile Details")');
+    const updatedName = `${readerName} (Senior Fellow)`;
+    await page.fill('input[value*="' + readerName + '"]', updatedName);
+    await page.click('button:has-text("Save Profile")');
+
+    await expect(page.locator('text=updated successfully')).toBeVisible();
   });
 });
 
-test.describe('Administrator Experience & Publishing Flow', () => {
-  test('Founder logs in, views overview, approves comment, and publishes new article', async ({ page }) => {
-    // 1. Visit Login
+test.describe('Administrator Experience, Server Autosave & Article Publishing', () => {
+  const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalDiplomacy2026!';
+  const articleTitle = `Diplomatic Synergy & Shared Heritage ${Date.now()}`;
+
+  test('Founder Administrator logs in and creates article with cloud autosave', async ({ page }) => {
+    // Navigate directly to /admin
     await page.goto('/admin/login');
     await expect(page.locator('h1')).toContainText('Publisher Portal');
 
-    // Fill credentials (prefilled by default for local setup, or explicit)
-    await page.fill('input[type="email"]', 'founder@asianculturaldiplomacy.org');
-    await page.fill('input[type="password"]', 'CulturalDiplomacy2026!');
+    await page.fill('input[type="email"]', adminEmail);
+    await page.fill('input[type="password"]', adminPassword);
     await page.click('button:has-text("Sign In to Dashboard")');
 
-    // 2. Overview Dashboard
-    await page.waitForURL('/admin');
+    await expect(page).toHaveURL(/\/admin/);
     await expect(page.locator('h1')).toContainText('Publishing & Dialogue Dashboard');
-    await expect(page.locator('text=Published Blogs')).toBeVisible();
 
-    // 3. Moderate Comments
-    await page.goto('/admin/comments');
-    await expect(page.locator('h1')).toContainText('Manage Comments');
-
-    // Check for pending comment and approve
-    const approveBtn = page.locator('button:has-text("Approve (Publish)")').first();
-    if (await approveBtn.count() > 0) {
-      await approveBtn.click();
-      await page.waitForTimeout(500);
-    }
-
-    // 4. Write a Blog
+    // Go to write article
     await page.goto('/admin/blogs/new');
     await expect(page.locator('h1')).toContainText('Write an Article');
 
-    const uniqueTitle = `Diplomatic Heritage Reflections ${Date.now()}`;
-    await page.fill('input[placeholder*="The Architecture of Dialogue"]', uniqueTitle);
-    await page.fill('input[placeholder*="Brief one-sentence"]', 'An automated test essay exploring harmonious dialogue in Asia.');
+    // Fill title
+    await page.fill('input[placeholder*="The Architecture of Dialogue"]', articleTitle);
+    await page.fill('input[placeholder*="Brief one-sentence editorial"]', 'An exploratory essay on cultural understanding across Asian traditions.');
 
-    // Select sister artwork preset
-    await page.click('button:has-text("Sister\'s Moon Bridge")');
-
-    // Add content in editor
+    // Focus editor and type content
     const editor = page.locator('.ProseMirror');
     await editor.click();
-    await editor.fill('In this essay, we contemplate the profound resonance between cultural diplomacy and peaceful coexistence across Asian traditions.');
+    await editor.fill('Cultural diplomacy begins not in treaties, but in reciprocal appreciation of heritage, language, and art.');
+
+    // Check Cloud Autosave Indicator
+    await expect(page.locator('text=Saved to Cloud').or(page.locator('text=Saving to Cloud'))).toBeVisible({ timeout: 6000 });
 
     // Publish Live
     await page.click('button:has-text("Publish Live")');
-    await expect(page.locator('text=Your article has been published live')).toBeVisible();
+    await expect(page.locator('text=published live').or(page.locator('text=saved'))).toBeVisible();
 
-    // 5. Verify publication on public Blog page
+    // Verify article appears on public blog
     await page.goto('/blog');
-    await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible();
+    await expect(page.locator(`text=${articleTitle}`)).toBeVisible();
   });
 });

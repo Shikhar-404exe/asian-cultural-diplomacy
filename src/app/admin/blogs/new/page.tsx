@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import TipTapEditor from '@/components/TipTapEditor';
 import {
@@ -8,16 +8,31 @@ import {
   Save,
   Globe,
   Eye,
-  Image as ImageIcon,
   CheckCircle2,
   AlertCircle,
   Clock,
-  Sparkles,
+  Cloud,
+  CloudOff,
+  History,
+  RotateCcw,
+  X,
 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+
+interface RevisionItem {
+  id: string;
+  revisionNumber: number;
+  title: string;
+  subtitle?: string | null;
+  content: string;
+  createdAt: string;
+  savedBy?: { name: string; email: string } | null;
+}
 
 export default function WriteBlogPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [articleId, setArticleId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -26,8 +41,16 @@ export default function WriteBlogPage() {
   const [isFeatured, setIsFeatured] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [autosaveStatus, setAutosaveStatus] = useState<string | null>(null);
+
+  // Cloud autosave state
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Revisions drawer
+  const [showRevisions, setShowRevisions] = useState(false);
+  const [revisions, setRevisions] = useState<RevisionItem[]>([]);
+  const [loadingRevisions, setLoadingRevisions] = useState(false);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -44,41 +67,87 @@ export default function WriteBlogPage() {
       .catch((err) => console.error(err));
   }, []);
 
-  // Autosave simulation/draft backup to localStorage
+  // Server-side cloud autosave with debounce
   useEffect(() => {
     if (!title && !content) return;
-    const timer = setTimeout(() => {
+
+    setSyncStatus('saving');
+
+    const timer = setTimeout(async () => {
       try {
-        localStorage.setItem(
-          'acd_blog_draft',
-          JSON.stringify({ title, subtitle, categoryId, coverImage, content, isFeatured, time: Date.now() })
-        );
-        setAutosaveStatus('Draft autosaved locally');
-      } catch (e) {}
-    }, 2000);
+        const res = await fetch('/api/articles/autosave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            articleId,
+            title,
+            subtitle,
+            categoryId,
+            coverImage,
+            content,
+            isFeatured,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          if (!articleId && data.articleId) {
+            setArticleId(data.articleId);
+          }
+          setSyncStatus('saved');
+          const now = new Date();
+          setLastSavedTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+          
+          // Redundant local cache backup
+          try {
+            localStorage.setItem(
+              'acd_blog_draft_backup',
+              JSON.stringify({ articleId: data.articleId, title, subtitle, categoryId, coverImage, content, isFeatured, time: Date.now() })
+            );
+          } catch (e) {}
+        } else {
+          setSyncStatus('error');
+        }
+      } catch (err) {
+        setSyncStatus('error');
+      }
+    }, 2500);
 
     return () => clearTimeout(timer);
-  }, [title, subtitle, categoryId, coverImage, content, isFeatured]);
+  }, [title, subtitle, categoryId, coverImage, content, isFeatured, articleId]);
 
-  // Load saved draft if user wants
-  useEffect(() => {
+  // Load revisions
+  const loadRevisions = async () => {
+    if (!articleId) return;
+    setLoadingRevisions(true);
     try {
-      const saved = localStorage.getItem('acd_blog_draft');
-      if (saved) {
-        const data = JSON.parse(saved);
-        if (data && (!title && !content)) {
-          // prefill
-          setTitle(data.title || '');
-          setSubtitle(data.subtitle || '');
-          if (data.categoryId) setCategoryId(data.categoryId);
-          if (data.coverImage) setCoverImage(data.coverImage);
-          if (data.content) setContent(data.content);
-          if (data.isFeatured !== undefined) setIsFeatured(data.isFeatured);
-          setAutosaveStatus('Restored previous unsaved work');
-        }
+      const res = await fetch(`/api/articles/${articleId}/revisions`);
+      if (res.ok) {
+        const data = await res.json();
+        setRevisions(data.revisions || []);
       }
-    } catch (e) {}
-  }, []);
+    } catch (err) {
+      console.error('Failed to load revisions:', err);
+    } finally {
+      setLoadingRevisions(false);
+    }
+  };
+
+  const handleOpenRevisions = () => {
+    setShowRevisions(true);
+    loadRevisions();
+  };
+
+  const handleRestoreRevision = (rev: RevisionItem) => {
+    if (window.confirm(`Restore Revision #${rev.revisionNumber} from ${new Date(rev.createdAt).toLocaleString()}? Current unsaved edits will be replaced.`)) {
+      setTitle(rev.title);
+      if (rev.subtitle) setSubtitle(rev.subtitle);
+      setContent(rev.content);
+      setShowRevisions(false);
+      setFeedback({ type: 'success', text: `Restored Revision #${rev.revisionNumber}. Changes will autosave to cloud.` });
+    }
+  };
 
   const handleSave = async (publish: boolean) => {
     if (!title.trim()) {
@@ -98,8 +167,11 @@ export default function WriteBlogPage() {
     setFeedback(null);
 
     try {
-      const res = await fetch('/api/articles', {
-        method: 'POST',
+      const endpoint = articleId ? `/api/articles/${articleId}` : '/api/articles';
+      const method = articleId ? 'PUT' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
@@ -117,7 +189,9 @@ export default function WriteBlogPage() {
       if (!res.ok) {
         setFeedback({ type: 'error', text: data.error || 'Failed to save publication.' });
       } else {
-        localStorage.removeItem('acd_blog_draft');
+        try {
+          localStorage.removeItem('acd_blog_draft_backup');
+        } catch (e) {}
         setFeedback({
           type: 'success',
           text: publish
@@ -152,19 +226,49 @@ export default function WriteBlogPage() {
             <h1 className="font-serif text-2xl font-bold text-brand-navy">
               Write an Article
             </h1>
-            <div className="text-[11px] text-slate-500 flex items-center space-x-2">
+            <div className="text-[11px] text-slate-500 flex items-center space-x-2 mt-0.5">
               <span>Non-technical WYSIWYG Publisher</span>
-              {autosaveStatus && (
-                <>
-                  <span>•</span>
-                  <span className="text-emerald-700 font-medium">{autosaveStatus}</span>
-                </>
+              <span>•</span>
+              
+              {/* Cloud Autosave Indicator */}
+              {syncStatus === 'saving' && (
+                <span className="inline-flex items-center space-x-1 text-brand-blue font-semibold">
+                  <Cloud className="w-3.5 h-3.5 animate-pulse" />
+                  <span>Saving to Cloud...</span>
+                </span>
+              )}
+              {syncStatus === 'saved' && (
+                <span className="inline-flex items-center space-x-1 text-emerald-700 font-semibold">
+                  <Cloud className="w-3.5 h-3.5" />
+                  <span>Saved to Cloud ({lastSavedTime})</span>
+                </span>
+              )}
+              {syncStatus === 'error' && (
+                <span className="inline-flex items-center space-x-1 text-amber-700 font-semibold">
+                  <CloudOff className="w-3.5 h-3.5" />
+                  <span>Offline cache active (Sync failed)</span>
+                </span>
+              )}
+              {syncStatus === 'idle' && (
+                <span className="text-slate-400">Ready</span>
               )}
             </div>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {articleId && (
+            <button
+              type="button"
+              onClick={handleOpenRevisions}
+              className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-full text-xs font-semibold bg-brand-ivory text-brand-navy border border-brand-border hover:bg-brand-powder/50 transition-colors"
+              title="View Version History"
+            >
+              <History className="w-3.5 h-3.5 text-brand-blue" />
+              <span>Revisions</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setPreviewMode(!previewMode)}
@@ -245,7 +349,7 @@ export default function WriteBlogPage() {
         /* Visual Editor Screen */
         <div className="space-y-6">
           
-          {/* Metadata Section: Title, Subtitle, Category, Cover */}
+          {/* Metadata Section */}
           <div className="bg-brand-ivory p-6 sm:p-8 rounded-2xl border border-brand-border/70 shadow-subtle space-y-4">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
@@ -317,21 +421,21 @@ export default function WriteBlogPage() {
                   onClick={() => setCoverImage('/art/founder-sister-bridge.jpg')}
                   className="text-xs px-3 py-1.5 rounded-lg bg-brand-cream border border-brand-border hover:bg-brand-powder/60"
                 >
-                  Sister's Moon Bridge
+                  Sister&apos;s Moon Bridge
                 </button>
                 <button
                   type="button"
                   onClick={() => setCoverImage('/art/founder-sister-courtyard.jpg')}
                   className="text-xs px-3 py-1.5 rounded-lg bg-brand-cream border border-brand-border hover:bg-brand-powder/60"
                 >
-                  Sister's Courtyard Pavilion
+                  Sister&apos;s Courtyard Pavilion
                 </button>
                 <button
                   type="button"
                   onClick={() => setCoverImage('/images/fuji-sakura.jpg')}
                   className="text-xs px-3 py-1.5 rounded-lg bg-brand-cream border border-brand-border hover:bg-brand-powder/60"
                 >
-                  Mount Fuji & Sakura
+                  Mount Fuji &amp; Sakura
                 </button>
               </div>
             </div>
@@ -354,7 +458,7 @@ export default function WriteBlogPage() {
           {/* Visual Rich Text Canvas */}
           <div className="space-y-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy">
-              Article Content & Body
+              Article Content &amp; Body
             </label>
             <TipTapEditor
               content={content}
@@ -363,6 +467,77 @@ export default function WriteBlogPage() {
             />
           </div>
 
+        </div>
+      )}
+
+      {/* Revisions History Modal */}
+      {showRevisions && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-brand-ivory rounded-2xl border border-brand-border max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="p-5 border-b border-brand-border/60 flex items-center justify-between bg-brand-cream/60">
+              <div className="flex items-center space-x-2">
+                <History className="w-5 h-5 text-brand-navy" />
+                <h3 className="font-serif font-bold text-lg text-brand-navy">
+                  Version History &amp; Revisions
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowRevisions(false)}
+                className="p-1 rounded-lg text-slate-500 hover:bg-brand-powder/50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              {loadingRevisions ? (
+                <div className="py-12 text-center text-sm text-slate-500">
+                  Loading previous drafts...
+                </div>
+              ) : revisions.length === 0 ? (
+                <div className="py-12 text-center text-sm text-slate-500">
+                  No previous revisions recorded yet. Revisions are captured automatically as you write.
+                </div>
+              ) : (
+                revisions.map((rev) => (
+                  <div
+                    key={rev.id}
+                    className="p-4 rounded-xl border border-brand-border/80 bg-brand-cream/40 flex items-center justify-between gap-4"
+                  >
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-bold text-xs bg-brand-navy text-brand-ivory px-2 py-0.5 rounded">
+                          Rev #{rev.revisionNumber}
+                        </span>
+                        <span className="font-semibold text-sm text-brand-navy">
+                          {rev.title}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 mt-1">
+                        Saved {new Date(rev.createdAt).toLocaleString()} by {rev.savedBy?.name || 'Administrator'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleRestoreRevision(rev)}
+                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-brand-ivory border border-brand-border text-brand-blue hover:bg-brand-powder/50 text-xs font-semibold shrink-0"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Restore</span>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="p-4 border-t border-brand-border/60 bg-brand-cream/40 text-right">
+              <button
+                onClick={() => setShowRevisions(false)}
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-brand-navy text-brand-ivory hover:bg-brand-blue"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

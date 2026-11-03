@@ -35,3 +35,4 @@ export async function POST(
     return NextResponse.json({ error: 'Failed to record like' }, { status: 500 });
   }
 }
+

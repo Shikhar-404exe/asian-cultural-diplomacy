@@ -45,3 +45,4 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete enquiry' }, { status: 500 });
   }
 }
+

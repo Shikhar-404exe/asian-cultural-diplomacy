@@ -10,11 +10,19 @@ import {
   AlertCircle,
   Save,
   Database,
+  Mail,
+  Bell,
 } from 'lucide-react';
 
 export default function AdminSettingsPage() {
   const [siteTitle, setSiteTitle] = useState('Asian Cultural Diplomacy');
   const [contactEmail, setContactEmail] = useState('dialogue@asianculturaldiplomacy.org');
+  const [notificationEmail, setNotificationEmail] = useState('');
+  const [gmailNotificationsEnabled, setGmailNotificationsEnabled] = useState(true);
+  const [notifyOnNewComment, setNotifyOnNewComment] = useState(true);
+  const [notifyOnNewReader, setNotifyOnNewReader] = useState(true);
+  const [notifyOnContactEnquiry, setNotifyOnContactEnquiry] = useState(true);
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -29,6 +37,19 @@ export default function AdminSettingsPage() {
         if (d.settings) {
           setSiteTitle(d.settings.siteTitle || '');
           setContactEmail(d.settings.contactEmail || '');
+          setNotificationEmail(d.settings.notificationEmail || '');
+          if (d.settings.gmailNotificationsEnabled !== undefined) {
+            setGmailNotificationsEnabled(d.settings.gmailNotificationsEnabled);
+          }
+          if (d.settings.notifyOnNewComment !== undefined) {
+            setNotifyOnNewComment(d.settings.notifyOnNewComment);
+          }
+          if (d.settings.notifyOnNewReader !== undefined) {
+            setNotifyOnNewReader(d.settings.notifyOnNewReader);
+          }
+          if (d.settings.notifyOnContactEnquiry !== undefined) {
+            setNotifyOnContactEnquiry(d.settings.notifyOnContactEnquiry);
+          }
         }
       })
       .catch((e) => console.error(e));
@@ -43,10 +64,18 @@ export default function AdminSettingsPage() {
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ siteTitle, contactEmail }),
+        body: JSON.stringify({
+          siteTitle,
+          contactEmail,
+          notificationEmail,
+          gmailNotificationsEnabled,
+          notifyOnNewComment,
+          notifyOnNewReader,
+          notifyOnContactEnquiry,
+        }),
       });
       if (res.ok) {
-        setFeedback({ type: 'success', text: 'Site settings updated successfully!' });
+        setFeedback({ type: 'success', text: 'Site & notification settings updated successfully!' });
       } else {
         setFeedback({ type: 'error', text: 'Failed to update settings.' });
       }
@@ -98,22 +127,17 @@ export default function AdminSettingsPage() {
   };
 
   const handleDownloadBackup = () => {
-    window.open('/api/backup', '_blank');
+    window.location.href = '/api/backup';
   };
 
   return (
-    <div className="space-y-8 max-w-4xl pb-16">
-      
-      {/* Header */}
-      <div className="bg-brand-cream/80 p-6 rounded-2xl border border-brand-border shadow-subtle">
-        <span className="text-xs font-semibold uppercase tracking-wider text-brand-blue">
-          System Administration
-        </span>
-        <h1 className="font-serif text-2xl sm:text-3xl font-bold text-brand-navy mt-1">
-          Settings & Data Backup
+    <div className="space-y-8 max-w-4xl mx-auto pb-16">
+      <div>
+        <h1 className="font-serif text-3xl font-bold text-brand-navy">
+          Platform Settings &amp; Security
         </h1>
-        <p className="text-xs sm:text-sm text-slate-600 mt-1">
-          Manage system preferences, change credentials, and export complete database backups.
+        <p className="text-slate-600 text-sm mt-1">
+          Manage general website preferences, administrator credentials, and database backups.
         </p>
       </div>
 
@@ -134,132 +158,202 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      {/* 1. General Site Settings */}
-      <div className="bg-brand-ivory p-6 sm:p-8 rounded-2xl border border-brand-border/70 shadow-subtle space-y-4">
-        <div className="flex items-center space-x-2 text-brand-navy">
-          <Settings className="w-5 h-5 text-brand-blue" />
-          <h3 className="font-serif text-xl font-bold">
-            General Configuration
-          </h3>
+      {/* General Settings */}
+      <div className="bg-brand-cream/60 p-6 sm:p-8 rounded-2xl border border-brand-border/70 shadow-subtle space-y-6">
+        <div className="flex items-center space-x-2.5 border-b border-brand-border/60 pb-3">
+          <Settings className="w-5 h-5 text-brand-navy" />
+          <h2 className="font-serif text-lg font-bold text-brand-navy">
+            General Website Identity
+          </h2>
         </div>
 
-        <form onSubmit={handleUpdateGeneral} className="space-y-4 text-xs sm:text-sm">
+        <form onSubmit={handleUpdateGeneral} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
-              Website Name
+              Website Title
             </label>
             <input
               type="text"
               value={siteTitle}
               onChange={(e) => setSiteTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-cream/40 border border-brand-border text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border/80 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm font-serif font-bold text-brand-navy"
             />
           </div>
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
-              Official Contact Email
+              Public Inquiry Email
             </label>
             <input
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-cream/40 border border-brand-border text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border/80 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
             />
+          </div>
+
+          {/* Gmail & Transactional Alerts */}
+          <div className="pt-4 border-t border-brand-border/60 space-y-4">
+            <div className="flex items-center space-x-2">
+              <Mail className="w-4 h-4 text-brand-blue" />
+              <h3 className="font-serif font-bold text-sm text-brand-navy">
+                Gmail &amp; Activity Notifications
+              </h3>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
+                Founder Notification Email
+              </label>
+              <input
+                type="email"
+                value={notificationEmail}
+                onChange={(e) => setNotificationEmail(e.target.value)}
+                placeholder="founder@asianculturaldiplomacy.org"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border/80 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">
+                Where platform alerts and moderation notices are delivered.
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <label className="flex items-center space-x-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={gmailNotificationsEnabled}
+                  onChange={(e) => setGmailNotificationsEnabled(e.target.checked)}
+                  className="w-4 h-4 text-brand-navy rounded border-brand-border"
+                />
+                <span className="text-xs font-semibold text-slate-700">Enable Gmail &amp; Email Notifications</span>
+              </label>
+
+              <label className="flex items-center space-x-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifyOnNewComment}
+                  onChange={(e) => setNotifyOnNewComment(e.target.checked)}
+                  className="w-4 h-4 text-brand-navy rounded border-brand-border"
+                />
+                <span className="text-xs text-slate-600">Notify immediately when a reader submits a comment</span>
+              </label>
+
+              <label className="flex items-center space-x-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifyOnNewReader}
+                  onChange={(e) => setNotifyOnNewReader(e.target.checked)}
+                  className="w-4 h-4 text-brand-navy rounded border-brand-border"
+                />
+                <span className="text-xs text-slate-600">Notify when a new reader registers an account</span>
+              </label>
+
+              <label className="flex items-center space-x-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notifyOnContactEnquiry}
+                  onChange={(e) => setNotifyOnContactEnquiry(e.target.checked)}
+                  className="w-4 h-4 text-brand-navy rounded border-brand-border"
+                />
+                <span className="text-xs text-slate-600">Notify on new diplomatic contact form enquiries</span>
+              </label>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={savingSettings}
-            className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-full bg-brand-navy hover:bg-brand-blue text-brand-ivory text-xs font-semibold tracking-wide transition-colors shadow-sm disabled:opacity-50"
+            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-brand-navy hover:bg-brand-blue text-brand-ivory text-xs font-semibold transition-colors disabled:opacity-50 shadow-sm"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{savingSettings ? 'Saving...' : 'Save Configuration'}</span>
+            <span>{savingSettings ? 'Saving...' : 'Save Settings'}</span>
           </button>
         </form>
       </div>
 
-      {/* 2. Security & Credentials */}
-      <div className="bg-brand-ivory p-6 sm:p-8 rounded-2xl border border-brand-border/70 shadow-subtle space-y-4">
-        <div className="flex items-center space-x-2 text-brand-navy">
-          <Lock className="w-5 h-5 text-brand-blue" />
-          <h3 className="font-serif text-xl font-bold">
-            Security & Password Change
-          </h3>
+      {/* Security & Password */}
+      <div className="bg-brand-cream/60 p-6 sm:p-8 rounded-2xl border border-brand-border/70 shadow-subtle space-y-6">
+        <div className="flex items-center space-x-2.5 border-b border-brand-border/60 pb-3">
+          <Lock className="w-5 h-5 text-brand-navy" />
+          <h2 className="font-serif text-lg font-bold text-brand-navy">
+            Administrator Password
+          </h2>
         </div>
 
-        <form onSubmit={handleUpdatePassword} className="space-y-4 text-xs sm:text-sm">
+        <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-md">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
-              Current Password *
+              Current Password
             </label>
             <input
               type="password"
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-cream/40 border border-brand-border text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border/80 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
-                New Password *
-              </label>
-              <input
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Min 8 characters"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-brand-cream/40 border border-brand-border text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
-                Confirm New Password *
-              </label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-brand-cream/40 border border-brand-border text-sm"
-              />
-            </div>
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
+              New Password (min 8 characters)
+            </label>
+            <input
+              type="password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border/80 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-brand-navy mb-1.5">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border/80 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
+            />
           </div>
 
           <button
             type="submit"
             disabled={savingPassword}
-            className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-full bg-brand-navy hover:bg-brand-blue text-brand-ivory text-xs font-semibold tracking-wide transition-colors shadow-sm disabled:opacity-50"
+            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-brand-navy hover:bg-brand-blue text-brand-ivory text-xs font-semibold transition-colors disabled:opacity-50 shadow-sm"
           >
-            <Lock className="w-3.5 h-3.5" />
-            <span>{savingPassword ? 'Updating...' : 'Update Password'}</span>
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>{savingPassword ? 'Updating Password...' : 'Update Password'}</span>
           </button>
         </form>
       </div>
 
-      {/* 3. One-Click Database Backup */}
-      <div className="bg-brand-powder/40 border border-brand-blue/30 rounded-2xl p-6 sm:p-8 space-y-4">
-        <div className="flex items-center space-x-2 text-brand-navy">
-          <Database className="w-5 h-5 text-brand-blue" />
-          <h3 className="font-serif text-xl font-bold">
-            Full Database Backup & Data Preservation
-          </h3>
+      {/* Database Backup & Disaster Recovery */}
+      <div className="bg-brand-cream/60 p-6 sm:p-8 rounded-2xl border border-brand-border/70 shadow-subtle space-y-4">
+        <div className="flex items-center space-x-2.5 border-b border-brand-border/60 pb-3">
+          <Database className="w-5 h-5 text-brand-navy" />
+          <h2 className="font-serif text-lg font-bold text-brand-navy">
+            Database Backup &amp; Safe Archival
+          </h2>
         </div>
-        <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-          Download a complete, structured JSON export of all your published articles, reader comments, upcoming events, founder meetups, and enquiries. You can keep this on your laptop or external drive for complete data safety.
+
+        <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
+          Download a verified timestamped snapshot of your SQLite database before making major structural updates or public deployment. The downloaded file contains all publications, categories, comments, and settings.
         </p>
 
-        <button
-          onClick={handleDownloadBackup}
-          className="inline-flex items-center space-x-2 px-6 py-3 rounded-full bg-brand-blue hover:bg-brand-navy text-brand-ivory text-xs font-semibold tracking-wide transition-colors shadow-sm"
-        >
-          <Download className="w-4 h-4 text-emerald-300" />
-          <span>Download Database Snapshot (.JSON)</span>
-        </button>
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={handleDownloadBackup}
+            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-navy text-brand-ivory text-xs font-semibold transition-colors shadow-sm"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Download Full Database Snapshot (.db)</span>
+          </button>
+        </div>
       </div>
 
     </div>

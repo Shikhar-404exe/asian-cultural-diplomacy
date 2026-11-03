@@ -88,11 +88,36 @@ export async function PUT(
       }
     }
 
+    dataToUpdate.lastAutosavedAt = new Date();
+
     const updated = await prisma.article.update({
       where: { id: existing.id },
       data: dataToUpdate,
       include: { category: true },
     });
+
+    // Record revision if content or title was updated
+    if ((content && content !== existing.content) || (title && title !== existing.title)) {
+      try {
+        const lastRev = await prisma.articleRevision.findFirst({
+          where: { articleId: existing.id },
+          orderBy: { revisionNumber: 'desc' },
+        });
+        const nextRevNum = (lastRev?.revisionNumber || 0) + 1;
+        await prisma.articleRevision.create({
+          data: {
+            articleId: existing.id,
+            revisionNumber: nextRevNum,
+            title: updated.title,
+            subtitle: updated.subtitle,
+            content: updated.content,
+            savedById: session.userId,
+          },
+        });
+      } catch (revErr) {
+        console.warn('Article revision snapshot warning:', revErr);
+      }
+    }
 
     return NextResponse.json({ success: true, article: updated });
   } catch (error) {
@@ -128,3 +153,4 @@ export async function DELETE(
     return NextResponse.json({ error: 'Failed to delete article' }, { status: 500 });
   }
 }
+

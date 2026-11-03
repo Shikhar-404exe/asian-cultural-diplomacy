@@ -62,23 +62,23 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Administration & Access */}
+          {/* Column 3: Community & Reader Access */}
           <div className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-widest text-brand-sky">
-              Platform & Access
+              Community & Dialogue
             </h4>
             <ul className="space-y-2 text-sm text-brand-powder/80">
               <li>
-                <Link href="/admin/login" className="hover:text-brand-ivory transition-colors">Publisher Sign In</Link>
+                <Link href="/login" className="hover:text-brand-ivory transition-colors">Reader Sign In</Link>
               </li>
               <li>
-                <Link href="/admin" className="hover:text-brand-ivory transition-colors">Founder Dashboard</Link>
+                <Link href="/register" className="hover:text-brand-ivory transition-colors">Join Reader Dialogue</Link>
               </li>
               <li>
                 <Link href="/about#philosophy" className="hover:text-brand-ivory transition-colors">Diplomacy Philosophy</Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-brand-ivory transition-colors">Media Enquiries</Link>
+                <Link href="/contact" className="hover:text-brand-ivory transition-colors">Media & Academic Enquiries</Link>
               </li>
             </ul>
           </div>
@@ -91,7 +91,7 @@ export default function Footer() {
             © {new Date().getFullYear()} Asian Cultural Diplomacy. All rights reserved.
           </div>
           <div className="flex items-center space-x-6">
-            <span>Local Network MVP Edition</span>
+            <span>Intercultural Digital Publication</span>
             <span>•</span>
             <span>Designed with Impeccable</span>
           </div>

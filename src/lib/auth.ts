@@ -6,16 +6,38 @@ const SECRET_KEY = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'asian_cultural_diplomacy_fallback_secret_key_2026'
 );
 
-const COOKIE_NAME = 'acd_admin_token';
+export const SESSION_COOKIE_NAME = 'acd_session_token';
+const LEGACY_COOKIE_NAME = 'acd_admin_token';
 
-export interface AdminSessionPayload {
+export type UserRole = 'ADMIN' | 'READER';
+
+export interface SessionPayload {
   userId: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
+  avatarUrl?: string | null;
 }
 
-export async function createSessionToken(payload: AdminSessionPayload): Promise<string> {
+// Backward-compatibility alias
+export type AdminSessionPayload = SessionPayload;
+
+/**
+ * Enforces server-side role assignment based on process.env.ADMIN_EMAIL.
+ * The administrator role is never selectable by the client during registration.
+ */
+export function getRoleForEmail(email: string): UserRole {
+  const configuredAdmin = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (configuredAdmin && email.trim().toLowerCase() === configuredAdmin) {
+    return 'ADMIN';
+  }
+  return 'READER';
+}
+
+/**
+ * Creates a signed JWT token valid for 7 days
+ */
+export async function createSessionToken(payload: SessionPayload): Promise<string> {
   return await new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -23,42 +45,98 @@ export async function createSessionToken(payload: AdminSessionPayload): Promise<
     .sign(SECRET_KEY);
 }
 
-export async function verifySessionToken(token: string): Promise<AdminSessionPayload | null> {
+/**
+ * Verifies a JWT token and returns the payload if valid
+ */
+export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify(token, SECRET_KEY);
-    return payload as unknown as AdminSessionPayload;
+    return payload as unknown as SessionPayload;
   } catch (err) {
     return null;
   }
 }
 
-export async function getAdminSession(): Promise<AdminSessionPayload | null> {
+/**
+ * Retrieves the currently active user session (ADMIN or READER)
+ */
+export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value || cookieStore.get(LEGACY_COOKIE_NAME)?.value;
   if (!token) return null;
   return await verifySessionToken(token);
 }
 
-export async function requireAdminSession(): Promise<AdminSessionPayload> {
+/**
+ * Retrieves the session ONLY if the authenticated user has the 'ADMIN' role.
+ * Readers attempting to authenticate against admin endpoints will receive null.
+ */
+export async function getAdminSession(): Promise<SessionPayload | null> {
+  const session = await getSession();
+  if (!session) return null;
+  if (session.role !== 'ADMIN') {
+    return null;
+  }
+  return session;
+}
+
+/**
+ * Asserts that the current session is an authenticated Administrator.
+ * Throws an error otherwise.
+ */
+export async function requireAdminSession(): Promise<SessionPayload> {
   const session = await getAdminSession();
+  if (!session) {
+    throw new Error('UNAUTHORIZED_ADMIN');
+  }
+  return session;
+}
+
+/**
+ * Asserts that any valid user is signed in (either ADMIN or READER).
+ */
+export async function requireSession(): Promise<SessionPayload> {
+  const session = await getSession();
   if (!session) {
     throw new Error('UNAUTHORIZED');
   }
   return session;
 }
 
-export async function setAdminSessionCookie(token: string) {
+/**
+ * Sets the authentication session cookie with HTTPOnly, secure, and SameSite protection.
+ */
+export async function setSessionCookie(token: string) {
   const cookieStore = await cookies();
-  cookieStore.set(COOKIE_NAME, token, {
+  const isProd = process.env.NODE_ENV === 'production';
+  
+  cookieStore.set(SESSION_COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProd,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',
   });
+
+  // Also set legacy cookie during transition
+  cookieStore.set(LEGACY_COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
+  });
 }
 
-export async function clearAdminSessionCookie() {
+/**
+ * Clears the session cookies on sign out
+ */
+export async function clearSessionCookie() {
   const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  cookieStore.delete(SESSION_COOKIE_NAME);
+  cookieStore.delete(LEGACY_COOKIE_NAME);
 }
+
+// Backward-compatibility aliases
+export const setAdminSessionCookie = setSessionCookie;
+export const clearAdminSessionCookie = clearSessionCookie;

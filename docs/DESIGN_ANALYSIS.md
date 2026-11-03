@@ -118,3 +118,4 @@ Strictly applying the mandatory palette:
 
 ## 12. Final Design Direction
 The Asian Cultural Diplomacy platform will unite the structural discipline of the Neo Mirai editorial reference with the timeless cultural warmth of the founder's sister's artworks and the mandatory Diplomatic Navy & Cream palette. The result is an authoritative, visually captivating publication that feels both intellectually rigorous and welcoming to an international audience.
+

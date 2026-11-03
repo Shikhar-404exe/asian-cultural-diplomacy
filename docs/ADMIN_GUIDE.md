@@ -127,3 +127,4 @@ You never have to worry about losing your essays or data:
 2. Scroll to the **Full Database Backup** section.
 3. Click the blue button: **Download Database Snapshot (.JSON)**.
 4. A complete backup file containing all your articles, reader comments, events, meetups, and settings will download to your laptop. Keep this file in a safe place.
+

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { checkRateLimit, sanitizePlainText } from '@/lib/security';
+import { notifyContactEnquiry } from '@/lib/notifications';
 
 export async function GET() {
   try {
@@ -24,7 +25,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
-    const rateCheck = checkRateLimit(`contact_${ip}`, 3, 10 * 60 * 1000); // 3 per 10 mins
+    const rateCheck = checkRateLimit(`contact_${ip}`, 5, 10 * 60 * 1000); // 5 per 10 mins
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: 'You have submitted multiple enquiries recently. Please wait a few moments.' },
@@ -66,6 +67,11 @@ export async function POST(req: NextRequest) {
         subject: cleanSubject,
         message: cleanMessage,
       },
+    });
+
+    // Notify founder via email
+    notifyContactEnquiry(cleanName, cleanEmail, cleanSubject, cleanMessage).catch((err) => {
+      console.warn('Enquiry notification warning:', err?.message || err);
     });
 
     return NextResponse.json({

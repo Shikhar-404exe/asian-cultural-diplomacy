@@ -31,9 +31,22 @@ const localPrisma = new PrismaClient({
 });
 
 async function exportSqliteData() {
-  console.log('\n--- Step 1: Extracting SQLite Data ---');
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  console.log('\n--- Step 1: Loading / Extracting Source Data ---');
   const exportDir = path.join(process.cwd(), 'backups');
+  if (fs.existsSync(exportDir)) {
+    const backupFiles = fs.readdirSync(exportDir).filter(f => f.startsWith('sqlite_export_') && f.endsWith('.json'));
+    if (backupFiles.length > 0) {
+      backupFiles.sort();
+      const latestExport = path.join(exportDir, backupFiles[backupFiles.length - 1]);
+      console.log(`Loading existing verified export: ${latestExport}`);
+      const data = JSON.parse(fs.readFileSync(latestExport, 'utf-8'));
+      console.log('Record Counts in Source Export:');
+      console.table(data.counts);
+      return { exportPath: latestExport, data };
+    }
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   if (!fs.existsSync(exportDir)) {
     fs.mkdirSync(exportDir, { recursive: true });
   }
@@ -164,6 +177,18 @@ async function migrateToPostgres(targetUrl, isDryRun, exportData) {
     }
     console.log(`- Migrated ${exportData.records.users.length} Users.`);
 
+    // 1b. Legacy AdminUsers
+    if (exportData.records.adminUsers && exportData.records.adminUsers.length > 0) {
+      for (const au of exportData.records.adminUsers) {
+        await pgClient.query(`
+          INSERT INTO "AdminUser" ("id", "email", "passwordHash", "name", "role", "createdAt", "updatedAt")
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          ON CONFLICT ("id") DO NOTHING
+        `, [au.id, au.email, au.passwordHash, au.name, au.role || 'FOUNDER', new Date(au.createdAt), new Date(au.updatedAt || au.createdAt)]);
+      }
+      console.log(`- Migrated ${exportData.records.adminUsers.length} Legacy AdminUsers.`);
+    }
+
     // 2. Categories
     for (const c of exportData.records.categories) {
       await pgClient.query(`
@@ -267,21 +292,41 @@ async function migrateToPostgres(targetUrl, isDryRun, exportData) {
     }
     console.log(`- Migrated ${exportData.records.auditLogs.length} Audit Logs.`);
 
+    // Sequence synchronization
+    try {
+      await pgClient.query(`
+        SELECT setval(pg_get_serial_sequence('"SiteSettings"', 'id'), coalesce(max(id), 1), true) FROM "SiteSettings";
+      `);
+      console.log('- Synchronized PostgreSQL sequence for SiteSettings.');
+    } catch (seqErr) {
+      // Ignored if table does not use serial sequence
+    }
+
     await pgClient.query('COMMIT');
 
     // Reconciliation Check
     console.log('\n--- Step 3: Verification & Reconciliation ---');
     const uCount = await pgClient.query('SELECT count(*) FROM "User"');
+    const auCount = await pgClient.query('SELECT count(*) FROM "AdminUser"');
     const cCount = await pgClient.query('SELECT count(*) FROM "Category"');
     const aCount = await pgClient.query('SELECT count(*) FROM "Article"');
     const rCount = await pgClient.query('SELECT count(*) FROM "ArticleRevision"');
+    const enCount = await pgClient.query('SELECT count(*) FROM "ContactEnquiry"');
+    const sCount = await pgClient.query('SELECT count(*) FROM "SiteSettings"');
+    const mCount = await pgClient.query('SELECT count(*) FROM "MediaItem"');
+    const lCount = await pgClient.query('SELECT count(*) FROM "AuditLog"');
 
-    console.log('PostgreSQL Reconciled Counts:');
+    console.log('PostgreSQL Target Counts:');
     console.table({
       users: uCount.rows[0].count,
+      adminUsers: auCount.rows[0].count,
       categories: cCount.rows[0].count,
       articles: aCount.rows[0].count,
       articleRevisions: rCount.rows[0].count,
+      contactEnquiries: enCount.rows[0].count,
+      siteSettings: sCount.rows[0].count,
+      mediaItems: mCount.rows[0].count,
+      auditLogs: lCount.rows[0].count,
     });
 
     console.log('\n[SUCCESS] Migration completed! All records preserved and verified.');

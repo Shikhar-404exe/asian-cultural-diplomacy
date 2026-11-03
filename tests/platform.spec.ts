@@ -134,12 +134,14 @@ test.describe('Administrator Experience, Server Autosave & Article Publishing', 
     await page.fill('input[type="password"]', adminPassword);
     await page.click('button:has-text("Sign In to Dashboard")');
 
-    await expect(page).toHaveURL(/\/admin/);
+    await page.waitForURL((url) => url.pathname === '/admin');
     await expect(page.locator('h1')).toContainText('Publishing & Dialogue Dashboard');
 
     // Go to write article
     await page.goto('/admin/blogs/new');
     await expect(page.locator('h1')).toContainText('Write an Article');
+    await page.waitForSelector('select option', { state: 'attached' });
+    await page.selectOption('select', { index: 0 });
 
     // Fill title
     await page.fill('input[placeholder*="The Architecture of Dialogue"]', articleTitle);

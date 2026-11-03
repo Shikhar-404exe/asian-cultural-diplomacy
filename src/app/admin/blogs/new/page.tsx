@@ -75,6 +75,7 @@ export default function WriteBlogPage() {
 
     const timer = setTimeout(async () => {
       try {
+        const effectiveCatId = categoryId || (categories.length > 0 ? categories[0].id : null);
         const res = await fetch('/api/articles/autosave', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -82,7 +83,7 @@ export default function WriteBlogPage() {
             articleId,
             title,
             subtitle,
-            categoryId,
+            categoryId: effectiveCatId,
             coverImage,
             content,
             isFeatured,
@@ -154,7 +155,8 @@ export default function WriteBlogPage() {
       setFeedback({ type: 'error', text: 'Please provide a title for your article.' });
       return;
     }
-    if (!categoryId) {
+    const effectiveCategoryId = categoryId || (categories.length > 0 ? categories[0].id : '');
+    if (!effectiveCategoryId) {
       setFeedback({ type: 'error', text: 'Please select a category.' });
       return;
     }
@@ -176,7 +178,7 @@ export default function WriteBlogPage() {
         body: JSON.stringify({
           title,
           subtitle,
-          categoryId,
+          categoryId: effectiveCategoryId,
           coverImage,
           content,
           isPublished: publish,

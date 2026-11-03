@@ -25,7 +25,7 @@ const path = require('path');
 const localPrisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || 'file:./dev.db',
+      url: 'file:./dev.db',
     },
   },
 });
@@ -87,7 +87,14 @@ function getPgClient(connectionString) {
 
 async function migrateToPostgres(targetUrl, isDryRun, exportData) {
   console.log('\n--- Step 2: Supabase PostgreSQL Migration ---');
-  const sanitizedUrl = targetUrl.replace(/:([^:@]+)@/, ':****@');
+  let sanitizedUrl = '[Protected PostgreSQL URL]';
+  try {
+    const parsed = new URL(targetUrl);
+    parsed.password = '****';
+    sanitizedUrl = parsed.toString();
+  } catch (e) {
+    sanitizedUrl = '[Protected PostgreSQL URL]';
+  }
   console.log(`Target URL: ${sanitizedUrl}`);
   console.log(`Mode: ${isDryRun ? 'DRY RUN (Verification Only)' : 'LIVE EXECUTION'}`);
 
@@ -296,7 +303,7 @@ async function main() {
   const isDryRun = args.includes('--dry-run');
   const isConfirm = args.includes('--confirm');
   const targetArg = args.find((a) => a.startsWith('--target='));
-  const targetUrl = targetArg ? targetArg.split('=')[1] : (process.env.SUPABASE_DATABASE_URL || process.env.TARGET_DATABASE_URL);
+  const targetUrl = targetArg ? targetArg.split('=')[1] : (process.env.DIRECT_URL || process.env.SUPABASE_DATABASE_URL || process.env.TARGET_DATABASE_URL);
 
   const { data } = await exportSqliteData();
 

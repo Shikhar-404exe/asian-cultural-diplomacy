@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { slugify, estimateReadingTime } from '@/lib/utils';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,9 +14,9 @@ export async function GET(req: NextRequest) {
     const tag = searchParams.get('tag') || '';
     const includeDrafts = searchParams.get('includeDrafts') === 'true';
 
-    // If requesting drafts, verify admin session
+    // If requesting drafts, verify admin session using request context
     if (includeDrafts) {
-      const session = await getAdminSession();
+      const session = await getAdminSession(req);
       if (!session) {
         return NextResponse.json({ error: 'Unauthorized to view drafts' }, { status: 401 });
       }
@@ -50,7 +53,14 @@ export async function GET(req: NextRequest) {
       ],
     });
 
-    return NextResponse.json({ articles });
+    return NextResponse.json(
+      { articles },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        },
+      }
+    );
   } catch (error) {
     console.error('Articles GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch articles' }, { status: 500 });
@@ -59,7 +69,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -117,6 +127,17 @@ export async function POST(req: NextRequest) {
       });
     } catch (revErr) {
       console.warn('Initial revision creation warning:', revErr);
+    }
+
+    // Invalidate caches across public and admin routes
+    try {
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${article.slug}`);
+      revalidatePath('/admin/blogs');
+      revalidatePath('/admin');
+      revalidatePath('/');
+    } catch (revalErr) {
+      console.warn('Revalidation notice:', revalErr);
     }
 
     return NextResponse.json({ success: true, article }, { status: 201 });

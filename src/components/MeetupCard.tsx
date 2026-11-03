@@ -1,5 +1,6 @@
 import React from 'react';
-import { Calendar, Clock, MapPin, ExternalLink, UserCheck } from 'lucide-react';
+import Link from 'next/link';
+import { Calendar, Clock, MapPin, ExternalLink, UserCheck, ArrowRight } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 interface MeetupCardProps {
@@ -44,7 +45,12 @@ export default function MeetupCard({ meetup }: MeetupCardProps) {
           </div>
 
           <h3 className="font-serif text-xl sm:text-2xl font-bold text-brand-navy leading-snug">
-            {meetup.title}
+            <Link
+              href={`/meetups/${meetup.slug}`}
+              className="hover:text-brand-blue transition-colors"
+            >
+              {meetup.title}
+            </Link>
           </h3>
         </div>
 
@@ -92,17 +98,27 @@ export default function MeetupCard({ meetup }: MeetupCardProps) {
           <span>{meetup.participationInstructions}</span>
         </div>
 
-        {meetup.rsvpLink && isUpcoming && (
-          <a
-            href={meetup.rsvpLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center space-x-1.5 px-4 py-2.5 rounded-full bg-brand-blue text-brand-ivory text-xs font-semibold hover:bg-brand-navy transition-colors shrink-0 shadow-sm"
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <Link
+            href={`/meetups/${meetup.slug}`}
+            className="inline-flex items-center space-x-1.5 px-3.5 py-2 rounded-full border border-brand-border bg-brand-cream/80 hover:bg-brand-powder text-brand-navy text-xs font-semibold transition-colors"
           >
-            <span>RSVP / Details</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        )}
+            <span>Details</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+
+          {meetup.rsvpLink && isUpcoming && (
+            <a
+              href={meetup.rsvpLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center space-x-1.5 px-4 py-2 rounded-full bg-brand-blue text-brand-ivory text-xs font-semibold hover:bg-brand-navy transition-colors shadow-sm"
+            >
+              <span>RSVP</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

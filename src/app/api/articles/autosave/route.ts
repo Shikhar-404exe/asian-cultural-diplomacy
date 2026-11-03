@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { generateSlug } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized: Admin privileges required' }, { status: 401 });
     }
@@ -81,27 +83,49 @@ export async function POST(req: NextRequest) {
     } else {
       // Create new draft article on server
       const baseSlug = generateSlug(cleanTitle);
-      let uniqueSlug = baseSlug;
+      let uniqueSlug = `${baseSlug}-${Date.now().toString().slice(-4)}`;
       let counter = 1;
       while (await prisma.article.findUnique({ where: { slug: uniqueSlug } })) {
-        uniqueSlug = `${baseSlug}-${counter}`;
+        uniqueSlug = `${baseSlug}-${counter}-${Date.now().toString().slice(-4)}`;
         counter++;
       }
 
-      article = await prisma.article.create({
-        data: {
-          title: cleanTitle,
-          slug: uniqueSlug,
-          subtitle: subtitle?.trim() || null,
-          categoryId: targetCategoryId,
-          coverImage: coverImage || '/art/founder-sister-bridge.jpg',
-          content: cleanContent,
-          isPublished: false,
-          isFeatured: isFeatured || false,
-          author: session.name,
-          lastAutosavedAt: new Date(),
-        },
-      });
+      try {
+        article = await prisma.article.create({
+          data: {
+            title: cleanTitle,
+            slug: uniqueSlug,
+            subtitle: subtitle?.trim() || null,
+            categoryId: targetCategoryId,
+            coverImage: coverImage || '/art/founder-sister-bridge.jpg',
+            content: cleanContent,
+            isPublished: false,
+            isFeatured: isFeatured || false,
+            author: session.name,
+            lastAutosavedAt: new Date(),
+          },
+        });
+      } catch (createErr: any) {
+        if (createErr.code === 'P2002') {
+          uniqueSlug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`;
+          article = await prisma.article.create({
+            data: {
+              title: cleanTitle,
+              slug: uniqueSlug,
+              subtitle: subtitle?.trim() || null,
+              categoryId: targetCategoryId,
+              coverImage: coverImage || '/art/founder-sister-bridge.jpg',
+              content: cleanContent,
+              isPublished: false,
+              isFeatured: isFeatured || false,
+              author: session.name,
+              lastAutosavedAt: new Date(),
+            },
+          });
+        } else {
+          throw createErr;
+        }
+      }
 
       // Create initial revision #1
       await prisma.articleRevision.create({

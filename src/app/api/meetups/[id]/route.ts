@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -16,7 +19,9 @@ export async function GET(
       return NextResponse.json({ error: 'Meetup not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ meetup });
+    const response = NextResponse.json({ meetup });
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   } catch (error) {
     console.error('Meetup GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch meetup' }, { status: 500 });
@@ -28,9 +33,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Admin authentication required' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -47,7 +52,13 @@ export async function PUT(
     const dataToUpdate: any = {};
     if (body.title !== undefined) dataToUpdate.title = body.title;
     if (body.description !== undefined) dataToUpdate.description = body.description;
-    if (body.date !== undefined) dataToUpdate.date = new Date(body.date);
+    if (body.date !== undefined) {
+      const parsedDate = new Date(body.date);
+      if (isNaN(parsedDate.getTime())) {
+        return NextResponse.json({ error: 'Invalid date provided' }, { status: 400 });
+      }
+      dataToUpdate.date = parsedDate;
+    }
     if (body.timeWindow !== undefined) dataToUpdate.timeWindow = body.timeWindow;
     if (body.venue !== undefined) dataToUpdate.venue = body.venue;
     if (body.city !== undefined) dataToUpdate.city = body.city;
@@ -60,7 +71,22 @@ export async function PUT(
       data: dataToUpdate,
     });
 
-    return NextResponse.json({ success: true, meetup: updated });
+    // Invalidate caches
+    try {
+      revalidatePath('/meetups');
+      revalidatePath(`/meetups/${existing.slug}`);
+      if (updated.slug !== existing.slug) {
+        revalidatePath(`/meetups/${updated.slug}`);
+      }
+      revalidatePath('/admin/meetups');
+      revalidatePath('/');
+    } catch (e) {
+      console.warn('Cache revalidation error in meetup PUT:', e);
+    }
+
+    const response = NextResponse.json({ success: true, meetup: updated });
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   } catch (error) {
     console.error('Meetup PUT error:', error);
     return NextResponse.json({ error: 'Failed to update meetup' }, { status: 500 });
@@ -72,9 +98,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Admin authentication required' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -87,10 +113,22 @@ export async function DELETE(
     }
 
     await prisma.meetup.delete({ where: { id: existing.id } });
-    return NextResponse.json({ success: true, message: 'Meetup deleted successfully' });
+
+    // Invalidate caches
+    try {
+      revalidatePath('/meetups');
+      revalidatePath(`/meetups/${existing.slug}`);
+      revalidatePath('/admin/meetups');
+      revalidatePath('/');
+    } catch (e) {
+      console.warn('Cache revalidation error in meetup DELETE:', e);
+    }
+
+    const response = NextResponse.json({ success: true, message: 'Meetup deleted successfully' });
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   } catch (error) {
     console.error('Meetup DELETE error:', error);
     return NextResponse.json({ error: 'Failed to delete meetup' }, { status: 500 });
   }
 }
-

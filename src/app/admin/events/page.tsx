@@ -1,14 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Calendar,
   Plus,
   Trash2,
-  Edit,
   ExternalLink,
   MapPin,
   CheckCircle2,
+  AlertCircle,
+  RefreshCw,
+  Search,
   X,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
@@ -33,7 +36,12 @@ interface EventItem {
 export default function ManageEventsPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'>('ALL');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -48,14 +56,19 @@ export default function ManageEventsPage() {
   const [isFeatured, setIsFeatured] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const fetchEvents = () => {
-    fetch('/api/events')
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.events) setEvents(d.events);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+  const fetchEvents = async () => {
+    try {
+      setRefreshing(true);
+      const res = await fetch('/api/events', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load events');
+      const d = await res.json();
+      if (d.events) setEvents(d.events);
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
@@ -64,8 +77,16 @@ export default function ManageEventsPage() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     if (!title || !description || !startDate || !venue || !city || !country) {
-      alert('Please fill in required fields.');
+      setFormError('Please fill in all required fields (title, description, start date, venue, city, country).');
+      return;
+    }
+
+    const parsedDate = new Date(startDate);
+    if (isNaN(parsedDate.getTime())) {
+      setFormError('Please enter a valid start date and time.');
       return;
     }
 
@@ -78,7 +99,7 @@ export default function ManageEventsPage() {
           title,
           description,
           coverImage,
-          startDate: new Date(startDate).toISOString(),
+          startDate: parsedDate.toISOString(),
           venue,
           city,
           country,
@@ -88,18 +109,29 @@ export default function ManageEventsPage() {
         }),
       });
 
-      if (res.ok) {
-        setShowModal(false);
-        setTitle('');
-        setDescription('');
-        setStartDate('');
-        setVenue('');
-        setCity('');
-        setRegistrationLink('');
-        fetchEvents();
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create event. Please check inputs and permissions.');
       }
-    } catch (err) {
-      console.error(err);
+
+      // Success
+      setSuccessMessage(`Event "${title}" published successfully.`);
+      setShowModal(false);
+      setTitle('');
+      setDescription('');
+      setStartDate('');
+      setVenue('');
+      setCity('');
+      setCountry('Japan');
+      setRegistrationLink('');
+      setStatus('UPCOMING');
+      setIsFeatured(false);
+      await fetchEvents();
+      setTimeout(() => setSuccessMessage(null), 5000);
+    } catch (err: any) {
+      console.error('Error creating event:', err);
+      setFormError(err.message || 'An unexpected error occurred while saving the event.');
     } finally {
       setSaving(false);
     }
@@ -118,17 +150,31 @@ export default function ManageEventsPage() {
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`Permanently delete event "${title}"?`)) return;
+  const handleDelete = async (id: string, eventTitle: string) => {
+    if (!window.confirm(`Permanently delete event "${eventTitle}"?`)) return;
     try {
       const res = await fetch(`/api/events/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setEvents(events.filter((e) => e.id !== id));
+        setSuccessMessage(`Event "${eventTitle}" deleted.`);
+        setTimeout(() => setSuccessMessage(null), 4000);
       }
     } catch (err) {
       console.error(err);
     }
   };
+
+  // Filtered Events
+  const filteredEvents = events.filter((ev) => {
+    const matchesStatus =
+      statusFilter === 'ALL' ? true : ev.status.toUpperCase() === statusFilter;
+    const matchesSearch =
+      searchQuery === '' ||
+      ev.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ev.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ev.venue.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="space-y-6">
@@ -147,25 +193,78 @@ export default function ManageEventsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-full bg-brand-navy hover:bg-brand-blue text-brand-ivory text-xs font-semibold tracking-wide transition-all shadow-sm shrink-0"
-        >
-          <Plus className="w-4 h-4 text-emerald-300" />
-          <span>Add New Event</span>
-        </button>
+        <div className="flex items-center space-x-3 shrink-0">
+          <button
+            onClick={() => fetchEvents()}
+            disabled={refreshing}
+            className="p-2.5 rounded-full border border-brand-border bg-brand-ivory hover:bg-brand-cream text-brand-navy transition-colors disabled:opacity-50"
+            title="Refresh event list"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
+          <button
+            onClick={() => {
+              setFormError(null);
+              setShowModal(true);
+            }}
+            className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-full bg-brand-navy hover:bg-brand-blue text-brand-ivory text-xs font-semibold tracking-wide transition-all shadow-sm"
+          >
+            <Plus className="w-4 h-4 text-emerald-300" />
+            <span>Add New Event</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Success Notification */}
+      {successMessage && (
+        <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl text-emerald-900 text-xs sm:text-sm flex items-center space-x-2 shadow-subtle animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="flex items-center space-x-1.5 p-1 bg-brand-cream/80 rounded-xl border border-brand-border text-xs overflow-x-auto">
+          {(['ALL', 'UPCOMING', 'ONGOING', 'COMPLETED', 'CANCELLED'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setStatusFilter(tab)}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
+                statusFilter === tab
+                  ? 'bg-brand-navy text-brand-ivory shadow-xs'
+                  : 'text-slate-600 hover:text-brand-navy hover:bg-brand-ivory/60'
+              }`}
+            >
+              {tab === 'ALL' ? 'All' : tab.charAt(0) + tab.slice(1).toLowerCase()}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative min-w-[240px]">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search events by title, venue, or city..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-brand-ivory border border-brand-border focus:outline-brand-blue"
+          />
+        </div>
       </div>
 
       {/* Events List */}
       {loading ? (
         <div className="p-12 text-center text-slate-500">Loading events...</div>
-      ) : events.length === 0 ? (
-        <div className="p-12 text-center bg-brand-ivory rounded-2xl border border-dashed border-brand-border text-slate-500">
-          No events created yet.
+      ) : filteredEvents.length === 0 ? (
+        <div className="p-12 text-center bg-brand-ivory rounded-2xl border border-dashed border-brand-border text-slate-500 text-sm">
+          {events.length === 0
+            ? 'No events created yet. Click "Add New Event" to publish one.'
+            : 'No events match the selected filters.'}
         </div>
       ) : (
         <div className="space-y-4">
-          {events.map((ev) => (
+          {filteredEvents.map((ev) => (
             <div
               key={ev.id}
               className="bg-brand-ivory p-6 rounded-2xl border border-brand-border/70 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4"
@@ -198,6 +297,16 @@ export default function ManageEventsPage() {
 
               {/* Status and Action Buttons */}
               <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Link
+                  href={`/events/${ev.slug}`}
+                  target="_blank"
+                  className="inline-flex items-center space-x-1 text-xs px-3 py-1.5 rounded-full bg-brand-cream border border-brand-border font-semibold text-brand-navy hover:bg-brand-powder transition-colors"
+                  title="View Public Event Page"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>View</span>
+                </Link>
+
                 <select
                   value={ev.status}
                   onChange={(e) => handleStatusChange(ev.id, e.target.value)}
@@ -238,6 +347,13 @@ export default function ManageEventsPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {formError && (
+              <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl text-rose-800 text-xs flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span>{formError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleCreateEvent} className="space-y-4 text-xs sm:text-sm">
               <div>
@@ -402,4 +518,3 @@ export default function ManageEventsPage() {
     </div>
   );
 }
-

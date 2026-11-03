@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { prisma } from '../src/lib/prisma';
 
 test.describe('Asian Cultural Diplomacy - Public Experience & Navigation Integrity', () => {
   test('Homepage loads with branding, sister artwork, and clean public navigation', async ({ page }) => {
@@ -40,7 +41,7 @@ test.describe('Asian Cultural Diplomacy - Public Experience & Navigation Integri
     await expect(page.locator('text=Cultural Diplomacy Philosophy')).toBeVisible();
   });
 
-  test('Publications, Events, and Meetups display respectful empty states when no demo data exists', async ({ page }) => {
+  test('Publications, Events, and Meetups display authentic content and headers', async ({ page }) => {
     await page.goto('/blog');
     await expect(page.locator('h1')).toContainText('Perspectives on Asian Cultural Diplomacy');
 
@@ -56,13 +57,18 @@ test.describe('Asian Cultural Diplomacy - Public Experience & Navigation Integri
     await expect(page.locator('h1')).toContainText('Contact & Academic Inquiries');
 
     const testId = Date.now().toString().slice(-4);
-    await page.fill('input[placeholder*="Dr. A. Tanaka"]', `Cultural Delegate ${testId}`);
+    await page.fill('input[placeholder*="Tanaka"]', `Cultural Delegate ${testId}`);
     await page.fill('input[placeholder*="name@institution.org"]', `delegate${testId}@culturaldiplomacy.test`);
     await page.fill('input[placeholder*="Research Collaboration"]', `Inquiry Regarding Diplomatic Exchange ${testId}`);
-    await page.fill('textarea[placeholder*="Please describe your proposal"]', 'We would be honored to discuss cross-border cultural initiatives in Asia.');
+    await page.fill('textarea[placeholder*="describe your proposal"]', 'We would be honored to discuss cross-border cultural initiatives in Asia.');
 
     await page.click('button:has-text("Transmit Enquiry")');
-    await expect(page.locator('text=safely received').or(page.locator('text=Thank you'))).toBeVisible();
+    await expect(page.locator('text=Your message has been safely received')).toBeVisible();
+
+    // Clean up test inquiry immediately
+    await prisma.contactEnquiry.deleteMany({
+      where: { email: `delegate${testId}@culturaldiplomacy.test` },
+    });
   });
 });
 
@@ -100,7 +106,7 @@ test.describe('Role Separation & Reader Authentication Experience', () => {
 
     // Attempt to access /admin directly
     await page.goto('/admin');
-    
+
     // Should be redirected away to login or account, never showing admin dashboard
     await expect(page).not.toHaveURL(/^\/admin$/);
   });
@@ -117,16 +123,23 @@ test.describe('Role Separation & Reader Authentication Experience', () => {
     await page.click('button:has-text("Save Profile")');
 
     await expect(page.locator('text=updated successfully')).toBeVisible();
+
+    // Clean up test reader account
+    await prisma.user.deleteMany({
+      where: { email: readerEmail },
+    });
   });
 });
 
-test.describe('Administrator Experience, Server Autosave & Article Publishing', () => {
+test.describe('Administrator Experience, Publishing & Management Synchronization', () => {
   const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
   const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalDiplomacy2026!';
-  const articleTitle = `Diplomatic Synergy & Shared Heritage ${Date.now()}`;
+  const testSuffix = Date.now().toString().slice(-5);
+  const articleTitle = `Test Article Synergy ${testSuffix}`;
+  const eventTitle = `Test Diplomatic Forum ${testSuffix}`;
+  const meetupTitle = `Test Dialogue Meetup ${testSuffix}`;
 
-  test('Founder Administrator logs in and creates article with cloud autosave', async ({ page }) => {
-    // Navigate directly to /admin
+  test('Founder Administrator logs in, creates article and verifies appearance in admin and public lists', async ({ page }) => {
     await page.goto('/admin/login');
     await expect(page.locator('h1')).toContainText('Publisher Portal');
 
@@ -159,8 +172,83 @@ test.describe('Administrator Experience, Server Autosave & Article Publishing', 
     await page.click('button:has-text("Publish Live")');
     await expect(page.locator('text=published live').or(page.locator('text=saved'))).toBeVisible();
 
+    // Verify article appears in Admin Manage Publications (/admin/blogs)
+    await page.goto('/admin/blogs');
+    await expect(page.locator('h1')).toContainText('Manage Publications');
+    await expect(page.locator(`text=${articleTitle}`).first()).toBeVisible();
+
     // Verify article appears on public blog
     await page.goto('/blog');
-    await expect(page.locator(`text=${articleTitle}`)).toBeVisible();
+    await expect(page.locator(`text=${articleTitle}`).first()).toBeVisible();
+
+    // Clean up created test article
+    await prisma.article.deleteMany({
+      where: { title: articleTitle },
+    });
+  });
+
+  test('Founder Administrator can create and view events', async ({ page }) => {
+    await page.goto('/admin/login');
+    await page.fill('input[type="email"]', adminEmail);
+    await page.fill('input[type="password"]', adminPassword);
+    await page.click('button:has-text("Sign In to Dashboard")');
+    await page.waitForURL((url) => url.pathname === '/admin');
+
+    await page.goto('/admin/events');
+    await expect(page.locator('h1')).toContainText('Manage Events');
+
+    // Open Modal
+    await page.click('button:has-text("Add New Event")');
+    await page.fill('input[placeholder*="Pan-Asian Cultural"]', eventTitle);
+    await page.fill('textarea[placeholder*="Overview of the symposium"]', 'A high-level symposium discussing regional cultural collaboration.');
+    await page.fill('input[type="datetime-local"]', '2026-09-15T10:00');
+    await page.fill('input[placeholder*="Kyoto International"]', 'Tokyo International Forum');
+    await page.fill('input[placeholder="e.g. Kyoto"]', 'Tokyo');
+    await page.fill('input[placeholder="e.g. Japan"]', 'Japan');
+
+    await page.click('button:has-text("Save & Publish Event")');
+
+    // Verify event appears in list
+    await expect(page.locator(`text=${eventTitle}`)).toBeVisible();
+
+    // Clean up created test event
+    await prisma.event.deleteMany({
+      where: { title: eventTitle },
+    });
+  });
+
+  test('Founder Administrator can create meetups and view standalone meetup page', async ({ page }) => {
+    await page.goto('/admin/login');
+    await page.fill('input[type="email"]', adminEmail);
+    await page.fill('input[type="password"]', adminPassword);
+    await page.click('button:has-text("Sign In to Dashboard")');
+    await page.waitForURL((url) => url.pathname === '/admin');
+
+    await page.goto('/admin/meetups');
+    await expect(page.locator('h1')).toContainText('Manage Public Meetups');
+
+    // Open Modal
+    await page.click('button:has-text("Add New Meetup")');
+    await page.fill('input[placeholder*="Kyoto University Cultural Dialogue"]', meetupTitle);
+    await page.fill('textarea[placeholder*="Details of the gathering"]', 'An open salon gathering for cultural practitioners and students.');
+    await page.fill('input[type="date"]', '2026-10-10');
+    await page.fill('input[placeholder*="14:30 - 16:30"]', '15:00 - 17:00 JST');
+    await page.fill('input[placeholder*="Faculty Club"]', 'Heritage Pavilion Cafe');
+    await page.fill('input[placeholder="e.g. Kyoto"]', 'Nara');
+    await page.fill('textarea[placeholder*="Open seating"]', 'Please arrive 10 minutes early.');
+
+    await page.click('button:has-text("Save & Announce Meetup")');
+
+    // Verify meetup appears in list
+    await expect(page.locator(`text=${meetupTitle}`)).toBeVisible();
+
+    // Verify public meetups page
+    await page.goto('/meetups');
+    await expect(page.locator(`text=${meetupTitle}`)).toBeVisible();
+
+    // Clean up created test meetup
+    await prisma.meetup.deleteMany({
+      where: { title: meetupTitle },
+    });
   });
 });

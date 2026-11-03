@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { slugify } from '@/lib/utils';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +21,9 @@ export async function GET(req: NextRequest) {
       orderBy: { date: 'desc' },
     });
 
-    return NextResponse.json({ meetups });
+    const response = NextResponse.json({ meetups });
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
   } catch (error) {
     console.error('Meetups GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch meetups' }, { status: 500 });
@@ -27,9 +32,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized: Admin authentication required' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -52,6 +57,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Invalid date provided.' },
+        { status: 400 }
+      );
+    }
+
     let slug = slugify(title);
     const existing = await prisma.meetup.findUnique({ where: { slug } });
     if (existing) {
@@ -63,7 +76,7 @@ export async function POST(req: NextRequest) {
         title,
         slug,
         description,
-        date: new Date(date),
+        date: parsedDate,
         timeWindow,
         venue,
         city,
@@ -73,10 +86,21 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, meetup }, { status: 201 });
-  } catch (error) {
+    // Invalidate caches
+    try {
+      revalidatePath('/meetups');
+      revalidatePath(`/meetups/${meetup.slug}`);
+      revalidatePath('/admin/meetups');
+      revalidatePath('/');
+    } catch (e) {
+      console.warn('Cache revalidation error in meetups POST:', e);
+    }
+
+    const response = NextResponse.json({ success: true, meetup }, { status: 201 });
+    response.headers.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+    return response;
+  } catch (error: any) {
     console.error('Meetup POST error:', error);
-    return NextResponse.json({ error: 'Failed to create meetup' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to create meetup' }, { status: 500 });
   }
 }
-

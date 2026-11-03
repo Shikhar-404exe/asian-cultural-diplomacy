@@ -33,6 +33,7 @@ export default function WriteBlogPage() {
   const router = useRouter();
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [articleId, setArticleId] = useState<string | null>(null);
+  const articleIdRef = React.useRef<string | null>(null);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
@@ -93,7 +94,8 @@ export default function WriteBlogPage() {
         const data = await res.json();
 
         if (res.ok && data.success) {
-          if (!articleId && data.articleId) {
+          if (data.articleId) {
+            articleIdRef.current = data.articleId;
             setArticleId(data.articleId);
           }
           setSyncStatus('saved');
@@ -169,8 +171,9 @@ export default function WriteBlogPage() {
     setFeedback(null);
 
     try {
-      const endpoint = articleId ? `/api/articles/${articleId}` : '/api/articles';
-      const method = articleId ? 'PUT' : 'POST';
+      const activeId = articleId || articleIdRef.current;
+      const endpoint = activeId ? `/api/articles/${activeId}` : '/api/articles';
+      const method = activeId ? 'PUT' : 'POST';
 
       const res = await fetch(endpoint, {
         method,
@@ -202,6 +205,7 @@ export default function WriteBlogPage() {
         });
         setTimeout(() => {
           router.push('/admin/blogs');
+          router.refresh();
         }, 1200);
       }
     } catch (err) {

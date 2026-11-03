@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { getAdminSession } from '@/lib/auth';
 import { slugify, estimateReadingTime } from '@/lib/utils';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(
   req: NextRequest,
@@ -9,7 +12,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
 
     const article = await prisma.article.findFirst({
       where: {
@@ -51,7 +54,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -119,6 +122,15 @@ export async function PUT(
       }
     }
 
+    // Revalidate paths
+    try {
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${updated.slug}`);
+      revalidatePath('/admin/blogs');
+      revalidatePath('/admin');
+      revalidatePath('/');
+    } catch (e) {}
+
     return NextResponse.json({ success: true, article: updated });
   } catch (error) {
     console.error('Article PUT error:', error);
@@ -131,7 +143,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -146,6 +158,14 @@ export async function DELETE(
     }
 
     await prisma.article.delete({ where: { id: existing.id } });
+
+    try {
+      revalidatePath('/blog');
+      revalidatePath(`/blog/${existing.slug}`);
+      revalidatePath('/admin/blogs');
+      revalidatePath('/admin');
+      revalidatePath('/');
+    } catch (e) {}
 
     return NextResponse.json({ success: true, message: 'Article deleted successfully' });
   } catch (error) {

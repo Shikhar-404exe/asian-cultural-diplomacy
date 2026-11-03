@@ -182,7 +182,10 @@ export default function EditBlogPage() {
       } else {
         setIsPublished(willPublish);
         setFeedback({ type: 'success', text: 'Article changes saved successfully.' });
-        setTimeout(() => router.push('/admin/blogs'), 1000);
+        setTimeout(() => {
+          router.push('/admin/blogs');
+          router.refresh();
+        }, 1000);
       }
     } catch (err) {
       setFeedback({ type: 'error', text: 'Network communication issue.' });
@@ -200,6 +203,7 @@ export default function EditBlogPage() {
       const res = await fetch(`/api/articles/${id}`, { method: 'DELETE' });
       if (res.ok) {
         router.push('/admin/blogs');
+        router.refresh();
       }
     } catch (err) {
       console.error(err);

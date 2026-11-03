@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import type { NextRequest } from 'next/server';
 import { prisma } from './prisma';
 
 const SECRET_KEY = new TextEncoder().encode(
@@ -59,10 +60,28 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 
 /**
  * Retrieves the currently active user session (ADMIN or READER)
+ * Supports passing NextRequest directly (for Route Handlers) or falling back
+ * safely to next/headers cookies() (for Server Components and Server Actions).
  */
-export async function getSession(): Promise<SessionPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value || cookieStore.get(LEGACY_COOKIE_NAME)?.value;
+export async function getSession(req?: NextRequest): Promise<SessionPayload | null> {
+  let token: string | undefined;
+
+  // 1. Check NextRequest cookies if passed from a Route Handler
+  if (req) {
+    token = req.cookies.get(SESSION_COOKIE_NAME)?.value || req.cookies.get(LEGACY_COOKIE_NAME)?.value;
+    if (token) {
+      return await verifySessionToken(token);
+    }
+  }
+
+  // 2. Fall back to Next.js cookies() store safely
+  try {
+    const cookieStore = await cookies();
+    token = cookieStore.get(SESSION_COOKIE_NAME)?.value || cookieStore.get(LEGACY_COOKIE_NAME)?.value;
+  } catch (err) {
+    // Expected when invoked outside a request store context
+  }
+
   if (!token) return null;
   return await verifySessionToken(token);
 }
@@ -71,8 +90,8 @@ export async function getSession(): Promise<SessionPayload | null> {
  * Retrieves the session ONLY if the authenticated user has the 'ADMIN' role.
  * Readers attempting to authenticate against admin endpoints will receive null.
  */
-export async function getAdminSession(): Promise<SessionPayload | null> {
-  const session = await getSession();
+export async function getAdminSession(req?: NextRequest): Promise<SessionPayload | null> {
+  const session = await getSession(req);
   if (!session) return null;
   if (session.role !== 'ADMIN') {
     return null;
@@ -84,8 +103,8 @@ export async function getAdminSession(): Promise<SessionPayload | null> {
  * Asserts that the current session is an authenticated Administrator.
  * Throws an error otherwise.
  */
-export async function requireAdminSession(): Promise<SessionPayload> {
-  const session = await getAdminSession();
+export async function requireAdminSession(req?: NextRequest): Promise<SessionPayload> {
+  const session = await getAdminSession(req);
   if (!session) {
     throw new Error('UNAUTHORIZED_ADMIN');
   }
@@ -95,8 +114,8 @@ export async function requireAdminSession(): Promise<SessionPayload> {
 /**
  * Asserts that any valid user is signed in (either ADMIN or READER).
  */
-export async function requireSession(): Promise<SessionPayload> {
-  const session = await getSession();
+export async function requireSession(req?: NextRequest): Promise<SessionPayload> {
+  const session = await getSession(req);
   if (!session) {
     throw new Error('UNAUTHORIZED');
   }

@@ -36,7 +36,7 @@ export default function ContactPage() {
       } else {
         setResult({
           type: 'success',
-          text: 'Thank you. Your message has been safely received and stored in the founder’s local inbox.',
+          text: 'Thank you. Your message has been safely received and transmitted to the founder’s administrative portal.',
         });
         setName('');
         setEmail('');

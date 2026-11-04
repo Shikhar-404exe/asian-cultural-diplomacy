@@ -88,3 +88,4 @@ All Route Handlers (`/api/articles`, `/api/articles/[id]`, `/api/articles/autosa
 | Publish Draft | Updates status from draft to published live | Immediate redirect and update without browser reload | **PASS** |
 | Delete Article | Removes record and purges stale caches | Removed instantly from admin list and public `/blog` | **PASS** |
 | Automated E2E | Playwright end-to-end verification suite | 100% pass across all publishing suites | **PASS** |
+

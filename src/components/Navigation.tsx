@@ -29,12 +29,12 @@ export default function Navigation() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Do not render public navigation inside the administrator portal
-  if (pathname.startsWith('/admin')) {
-    return null;
-  }
-
   useEffect(() => {
+    // Skip user fetching in administrator portal
+    if (pathname.startsWith('/admin')) {
+      return;
+    }
+
     async function fetchUser() {
       try {
         const res = await fetch('/api/auth/me');
@@ -57,6 +57,11 @@ export default function Navigation() {
     fetchUser();
   }, [pathname]);
 
+  // Do not render public navigation inside the administrator portal
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -75,7 +80,7 @@ export default function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 bg-brand-ivory/95 backdrop-blur-md border-b border-brand-border/60 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div className="flex items-center justify-between h-20">
           
           {/* Logo & Brand Emblem */}

@@ -203,6 +203,18 @@ function generateBrandedHtml(title: string, subtitle: string, contentHtml: strin
 }
 
 /**
+ * Resolves the destination email address for founder notifications.
+ * Supports FOUNDER_NOTIFICATION_EMAIL (e.g. founder's Gmail), falling back to ADMIN_EMAIL or default.
+ */
+export function getNotificationRecipient(): string {
+  return (
+    process.env.FOUNDER_NOTIFICATION_EMAIL ||
+    process.env.ADMIN_EMAIL ||
+    'founder@asianculturaldiplomacy.org'
+  ).trim();
+}
+
+/**
  * Core dispatch function.
  * Attempts real sending via nodemailer; if unconfigured, logs to AuditLog and console.
  */
@@ -253,7 +265,7 @@ async function sendNotificationEmail(payload: EmailPayload) {
  * Triggers notification when a new reader registers an account.
  */
 export async function notifyNewReaderRegistration(name: string, email: string) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
+  const adminEmail = getNotificationRecipient();
 
   const title = 'New Reader Registered';
   const subtitle = 'A new reader has joined the Asian Cultural Diplomacy dialogue platform.';
@@ -278,7 +290,7 @@ export async function notifyNewReaderRegistration(name: string, email: string) {
  * Triggers notification when a new comment is posted on an article.
  */
 export async function notifyNewComment(articleTitle: string, authorName: string, commentContent: string, commentId: string) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
+  const adminEmail = getNotificationRecipient();
 
   const title = 'New Reader Comment Submitted';
   const subtitle = `A comment has been posted on "${articleTitle}".`;
@@ -304,7 +316,7 @@ export async function notifyNewComment(articleTitle: string, authorName: string,
  * Triggers notification when a reader or automated filter flags a comment.
  */
 export async function notifyFlaggedComment(articleTitle: string, authorName: string, commentContent: string, reason: string) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
+  const adminEmail = getNotificationRecipient();
 
   const title = 'Comment Flagged for Moderation';
   const subtitle = `A comment on "${articleTitle}" requires urgent moderation attention.`;
@@ -329,7 +341,7 @@ export async function notifyFlaggedComment(articleTitle: string, authorName: str
  * Triggers notification when a visitor submits a contact enquiry.
  */
 export async function notifyContactEnquiry(senderName: string, senderEmail: string, subject: string, message: string) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
+  const adminEmail = getNotificationRecipient();
 
   const title = 'New Diplomatic Contact Enquiry';
   const subtitle = `Received enquiry: "${subject}"`;

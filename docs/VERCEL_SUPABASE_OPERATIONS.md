@@ -110,3 +110,4 @@ This idempotently upserts the 5 categories, 3 authentic founder publications, 3 
 1. **No Credentials in Git**: `.env` and all secrets are excluded from Git. `.env.example` provides safe placeholders only.
 2. **Strict Server-Side Session Validation**: Route Handlers extract cookies defensively and enforce server-side role validation (`ADMIN` vs `READER`).
 3. **No Direct Public Writes to Storage**: Uploads pass through `/api/upload` which verifies administrator authentication before streaming to the Supabase `media` bucket.
+

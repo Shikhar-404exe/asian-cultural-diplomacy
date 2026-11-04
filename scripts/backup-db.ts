@@ -45,3 +45,4 @@ async function backup() {
 backup()
   .catch(console.error)
   .finally(() => prisma.$disconnect());
+

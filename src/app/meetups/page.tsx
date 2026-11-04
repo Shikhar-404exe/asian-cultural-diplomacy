@@ -19,7 +19,7 @@ export default async function MeetupsPage() {
 
   return (
     <div className="bg-architectural-grid min-h-screen py-16 sm:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         
         {/* Header */}
         <div className="max-w-3xl mb-12">
@@ -57,7 +57,7 @@ export default async function MeetupsPage() {
 
           {upcomingMeetups.length === 0 ? (
             <div className="p-10 text-center bg-brand-cream/40 rounded-2xl border border-dashed border-brand-border text-slate-500 text-sm">
-              No new public appearances are currently scheduled. Please check back soon or follow our publications.
+              No meetups have been announced yet. Please check back soon or follow our publications for upcoming appearances.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

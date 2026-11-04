@@ -28,8 +28,7 @@ export default function AdminLoginPage() {
       if (!res.ok) {
         setError(data.error || 'Login failed. Please check your credentials.');
       } else {
-        router.push('/admin');
-        router.refresh();
+        window.location.href = '/admin';
       }
     } catch (err) {
       setError('Connection error. Please try again.');

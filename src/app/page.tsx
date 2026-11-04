@@ -51,7 +51,7 @@ export default async function HomePage() {
       
       {/* 1. HERO SECTION: Reference-Inspired Split Architecture */}
       <section className="border-b border-brand-border/70 overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-[620px]">
+        <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-[620px]">
           
           {/* Left Hero Column: Dark Navy Agenda & Pillars */}
           <div className="lg:col-span-5 bg-brand-navy text-brand-ivory p-8 sm:p-12 lg:p-14 flex flex-col justify-between border-r border-brand-navy/90">
@@ -151,7 +151,7 @@ export default async function HomePage() {
       </section>
 
       {/* 2. ORGANISATION INTRODUCTION */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div className="max-w-3xl mx-auto text-center space-y-4">
           <span className="text-xs uppercase tracking-widest font-semibold text-brand-blue">
             Our Cultural Commitment
@@ -177,7 +177,7 @@ export default async function HomePage() {
 
       {/* 3. FEATURED PUBLICATION */}
       {featuredArticle && (
-        <section className="pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="pb-20 max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-2">
               <BookOpen className="w-5 h-5 text-brand-blue" />
@@ -200,7 +200,7 @@ export default async function HomePage() {
 
       {/* 4. LATEST PUBLICATIONS GRID */}
       <section className="py-20 bg-brand-cream/40 border-y border-brand-border/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12">
             <div>
               <span className="text-xs uppercase tracking-widest font-semibold text-brand-blue">
@@ -240,7 +240,7 @@ export default async function HomePage() {
       </section>
 
       {/* 5. EXPLORE CULTURAL PERSPECTIVES: ARTWORK INTEGRATION */}
-      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="text-xs uppercase tracking-widest font-semibold text-brand-blue">
             Artistic Heritage
@@ -306,10 +306,10 @@ export default async function HomePage() {
                 Traditional gongbi painting featuring jade-tiled pavilions, resilient bamboo groves, and flourishing peonies. It reminds us that sustainable diplomacy requires sanctuaries of quiet reflection.
               </p>
               <Link
-                href="/blog/courtyards-of-contemplation-classical-architecture"
+                href="/about#philosophy"
                 className="inline-flex items-center space-x-1.5 text-xs font-semibold text-brand-blue hover:text-brand-navy"
               >
-                <span>Read Essay</span>
+                <span>Read Philosophy</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -320,7 +320,7 @@ export default async function HomePage() {
 
       {/* 6. UPCOMING EVENTS */}
       <section className="py-20 bg-brand-powder/25 border-y border-brand-border/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12">
             <div>
               <span className="text-xs uppercase tracking-widest font-semibold text-brand-blue">
@@ -360,7 +360,7 @@ export default async function HomePage() {
       </section>
 
       {/* 7. UPCOMING MEETUPS: FOUNDER PUBLIC APPEARANCES */}
-      <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-24 max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12">
           <div>
             <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-semibold uppercase tracking-wider mb-2">
@@ -403,7 +403,7 @@ export default async function HomePage() {
       </section>
 
       {/* 8. MANIFESTO CALLOUT BANNER (Neo Mirai Reference Feature) */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pb-20">
         <div className="rounded-3xl bg-brand-navy text-brand-ivory overflow-hidden grid grid-cols-1 lg:grid-cols-12 shadow-elevated">
           
           <div className="lg:col-span-7 p-8 sm:p-14 lg:p-16 flex flex-col justify-between">

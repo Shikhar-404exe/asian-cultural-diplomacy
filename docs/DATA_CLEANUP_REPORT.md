@@ -55,27 +55,11 @@ Before performing any destructive operation:
 
 ---
 
-## 4. Restored Authentic Editorial Content
+## 4. Pristine Founder Starting Point & Empty State Design
 
-To ensure the platform presents a pristine and authentic scholarly presence upon launch, authentic baseline publications, symposia, and meetups were seeded:
+In accordance with the founder handover directive, all seed and mock articles, events, and meetups have been completely purged from the production database. The platform is delivered in a pristine, blank-canvas state ready for the founder to publish her authentic work directly through the Publisher Portal.
 
-### 4.1 Authentic Published Articles (3)
-1. **The Architecture of Dialogue: Building Bridges Across Asian Civilisations**
-   - Category: Diplomatic Essays | Author: Founder & Director | Status: Live (Featured)
-2. **Courtyards of Contemplation: Spatial Philosophy in Asian Diplomacy**
-   - Category: Art & Heritage | Author: Founder & Director | Status: Live
-3. **The Silk Road of Intangible Heritage: Weaving Collective Memory**
-   - Category: Regional Dialogues | Author: Founder & Director | Status: Live
-
-### 4.2 Authentic Symposia & Conferences (3)
-1. **Pan-Asian Cultural Diplomacy Symposium 2026** (Kyoto, Japan — UPCOMING, Featured)
-2. **Roundtable on Traditional Arts & Contemporary Statecraft** (Singapore — UPCOMING)
-3. **Winter Salon: Asian Silk Routes & Shared Memory** (Seoul, South Korea — COMPLETED)
-
-### 4.3 Authentic Public Meetups (3)
-1. **University Visit & Open Dialogue: Asian Cultural Exchange** (Kyoto, Japan — UPCOMING)
-2. **Cultural Salon & Coffee: Perspectives on Heritage Preservation** (Tokyo, Japan — UPCOMING)
-3. **Academic Gathering: South & East Asian Literary Connections** (Bangkok, Thailand — COMPLETED)
+All public pages (`/blog`, `/events`, `/meetups`, and `/admin`) display polished, respectful empty states that explain to visitors that inaugural publications and announcements are currently in preparation.
 
 ---
 
@@ -84,13 +68,16 @@ To ensure the platform presents a pristine and authentic scholarly presence upon
 ```json
 {
   "users": 1,
-  "articles": 3,
-  "categories": 5,
-  "events": 3,
-  "meetups": 3,
-  "mediaItems": 3,
+  "adminUsers": 1,
+  "articles": 0,
+  "events": 0,
+  "meetups": 0,
+  "comments": 0,
   "enquiries": 0,
-  "comments": 0
+  "categories": 5,
+  "siteSettings": 1,
+  "mediaItems": 3
 }
 ```
-All tables are in an authentic, production-ready state with zero test pollution.
+All tables are in an authentic, production-ready state with zero test or mock pollution. The founder account (`founder@asianculturaldiplomacy.org`), 5 core categories, site settings, and 3 artwork media assets are intact and verified.
+

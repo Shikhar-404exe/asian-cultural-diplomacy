@@ -33,7 +33,7 @@ export default async function EventsPage({
 
   return (
     <div className="bg-architectural-grid min-h-screen py-16 sm:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         
         {/* Header */}
         <div className="max-w-3xl mb-12">
@@ -87,9 +87,13 @@ export default async function EventsPage({
           <div className="text-center py-20 bg-brand-cream/40 rounded-2xl border border-dashed border-brand-border text-slate-500 font-sans">
             <Calendar className="w-10 h-10 text-brand-sky mx-auto mb-3 opacity-60" />
             <h3 className="font-serif text-xl font-bold text-brand-navy mb-1">
-              No events found in this category
+              {filter === 'past' ? 'No archived events found.' : 'No upcoming events at the moment.'}
             </h3>
-            <p className="text-xs sm:text-sm">Check back shortly as new international engagements are announced.</p>
+            <p className="text-xs sm:text-sm">
+              {filter === 'past'
+                ? 'Past international symposia and academic proceedings will be archived here.'
+                : 'Please check back shortly as new international engagements and symposium programmes are announced.'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

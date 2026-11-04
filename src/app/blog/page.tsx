@@ -46,7 +46,7 @@ export default async function BlogPage({
 
   return (
     <div className="bg-architectural-grid min-h-screen py-16 sm:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         
         {/* Page Heading */}
         <div className="max-w-3xl mb-12">
@@ -68,9 +68,15 @@ export default async function BlogPage({
         {articles.length === 0 ? (
           <div className="text-center py-20 bg-brand-cream/40 rounded-2xl border border-dashed border-brand-border text-slate-500 font-sans my-12">
             <h3 className="font-serif text-xl font-bold text-brand-navy mb-2">
-              No publications match your criteria
+              {search || (category && category !== 'all')
+                ? 'No publications match your criteria'
+                : 'No publications have been published yet.'}
             </h3>
-            <p className="text-sm">Try selecting another category or clearing your search keywords.</p>
+            <p className="text-sm">
+              {search || (category && category !== 'all')
+                ? 'Try selecting another category or clearing your search keywords.'
+                : 'Please check back soon as the founder publishes new editorial essays and field observations.'}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 my-10">

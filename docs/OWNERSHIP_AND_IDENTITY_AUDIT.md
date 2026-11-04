@@ -71,3 +71,4 @@ $ git grep -i "prajapati" src/ prisma/ public/
 ## 5. Compliance Sign-off
 
 The application strictly honours the founder's ownership and intellectual autonomy. The platform is ready for public deployment with pristine organizational branding.
+

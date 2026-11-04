@@ -259,7 +259,7 @@ export default async function AdminOverviewPage() {
                     {art.title}
                   </h4>
                   <div className="text-[11px] text-slate-500 mt-0.5 flex items-center space-x-2">
-                    <span className="text-brand-blue font-medium">{art.category.name}</span>
+                    <span className="text-brand-blue font-medium">{art.category?.name || 'General'}</span>
                     <span>•</span>
                     <span>{art.isPublished ? 'Published' : 'Draft'}</span>
                   </div>
@@ -307,7 +307,7 @@ export default async function AdminOverviewPage() {
                     "{c.content}"
                   </p>
                   <div className="text-[10px] text-brand-sky truncate">
-                    On: {c.article.title}
+                    On: {c.article?.title || 'Publication'}
                   </div>
                 </div>
               ))}

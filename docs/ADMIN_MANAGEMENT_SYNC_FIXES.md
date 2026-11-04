@@ -60,3 +60,4 @@ Both management workflows and dynamic public views were added to Playwright auto
 - `Founder Administrator can create and view events`: **PASS (5.6s)**
 - `Founder Administrator can create meetups and view standalone meetup page`: **PASS (6.5s)**
 - Dynamic route `/meetups/[slug]` compiles and server-renders with zero hydration errors.
+

@@ -11,3 +11,4 @@ async function showSettings() {
 showSettings()
   .catch(console.error)
   .finally(() => prisma.$disconnect());
+

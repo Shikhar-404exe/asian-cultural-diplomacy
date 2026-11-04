@@ -48,12 +48,8 @@
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   - `SUPABASE_SERVICE_ROLE_KEY`
   - `SUPABASE_STORAGE_BUCKET="media"`
-  - `GMAIL_USER="founder@asianculturaldiplomacy.org"`
-  - `GMAIL_CLIENT_ID`
-  - `GMAIL_CLIENT_SECRET`
-  - `GMAIL_REFRESH_TOKEN`
-  - `GOOGLE_CLIENT_ID`
-  - `GOOGLE_CLIENT_SECRET`
+  - `GMAIL_USER="shashwatiprajapati@gmail.com"`
+  - `GMAIL_APP_PASSWORD`
 
 ### Step 3: DNS & Custom Domain Records
 - [ ] In domain registrar (Cloudflare / Namecheap / Route 53):

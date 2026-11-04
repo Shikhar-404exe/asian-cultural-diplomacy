@@ -46,9 +46,9 @@ GMAIL_REFRESH_TOKEN="your-refresh-token"
 # Optional fallback:
 # GMAIL_APP_PASSWORD="abcd efgh ijkl mnop"
 
-# Google Sign-In for Readers
-GOOGLE_CLIENT_ID="your-google-oauth-client-id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your-google-oauth-client-secret"
+# Direct Reader Authentication
+# Readers register and authenticate directly using verified email and password.
+# No third-party OAuth providers required.
 ```
 
 ---

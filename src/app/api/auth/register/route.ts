@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
     const cleanName = name.trim();
 
     // Prevent public registration using configured administrator email
-    const configuredAdmin = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-    if (configuredAdmin && cleanEmail === configuredAdmin) {
+    const configuredAdmin = (process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com').trim().toLowerCase();
+    if (cleanEmail === configuredAdmin || cleanEmail === 'shashwatiprajapati@gmail.com') {
       return NextResponse.json(
         { error: 'The administrator account is provisioned privately and cannot be created through public registration.' },
         { status: 403 }

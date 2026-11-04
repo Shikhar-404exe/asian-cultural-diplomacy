@@ -31,7 +31,12 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json({ settings });
+    return NextResponse.json({
+      settings: {
+        ...settings,
+        notificationEmail: settings.gmailUser || settings.contactEmail || '',
+      },
+    });
   } catch (error) {
     console.error('Settings GET error:', error);
     return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
@@ -40,9 +45,9 @@ export async function GET() {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await getAdminSession();
+    const session = await getAdminSession(req);
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized. Please sign in again.' }, { status: 401 });
     }
 
     const body = await req.json();
@@ -74,9 +79,17 @@ export async function PUT(req: NextRequest) {
         return NextResponse.json({ error: 'Current password is required to set a new password' }, { status: 400 });
       }
 
-      // Check User table first, then fallback to AdminUser
-      let user = await prisma.user.findUnique({ where: { id: session.userId } });
-      let adminUser = await prisma.adminUser.findUnique({ where: { id: session.userId } });
+      // Check User table first by id or email
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [{ id: session.userId }, { email: session.email }],
+        },
+      });
+      const adminUser = await prisma.adminUser.findFirst({
+        where: {
+          OR: [{ id: session.userId }, { email: session.email }],
+        },
+      });
 
       const existingHash = user?.passwordHash || adminUser?.passwordHash;
       if (!existingHash) {
@@ -93,16 +106,16 @@ export async function PUT(req: NextRequest) {
       }
 
       const newHash = await bcrypt.hash(newPassword, 12);
-      
+
       if (user) {
         await prisma.user.update({
-          where: { id: session.userId },
+          where: { id: user.id },
           data: { passwordHash: newHash },
         });
       }
       if (adminUser) {
         await prisma.adminUser.update({
-          where: { id: session.userId },
+          where: { id: adminUser.id },
           data: { passwordHash: newHash },
         });
       }
@@ -130,18 +143,40 @@ export async function PUT(req: NextRequest) {
     if (body.notifyOnNewEnquiry !== undefined) dataToUpdate.notifyOnNewEnquiry = body.notifyOnNewEnquiry;
     if (body.notifyOnFlaggedComment !== undefined) dataToUpdate.notifyOnFlaggedComment = body.notifyOnFlaggedComment;
 
-    const settings = await prisma.siteSettings.upsert({
-      where: { id: 1 },
-      update: dataToUpdate,
-      create: {
-        id: 1,
-        ...dataToUpdate,
+    // Check if record exists
+    const existingSettings = await prisma.siteSettings.findUnique({ where: { id: 1 } });
+    let settings;
+    if (existingSettings) {
+      settings = await prisma.siteSettings.update({
+        where: { id: 1 },
+        data: dataToUpdate,
+      });
+    } else {
+      settings = await prisma.siteSettings.create({
+        data: {
+          id: 1,
+          siteTitle: 'Asian Cultural Diplomacy',
+          siteTagline: 'Bridging Traditions, Inspiring Global Dialogue & Cultivating Harmony',
+          aboutFounderBio: 'Founder & Director',
+          aboutMission: 'Promoting authentic cross-border dialogue.',
+          aboutVision: 'A world anchored in mutual cultural respect.',
+          aboutObjectives: '[]',
+          aboutAreasOfEngagement: '[]',
+          aboutPhilosophy: 'Cultural diplomacy is an invitation to shared reflection.',
+          ...dataToUpdate,
+        },
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      settings: {
+        ...settings,
+        notificationEmail: settings.gmailUser || settings.contactEmail || '',
       },
     });
-
-    return NextResponse.json({ success: true, settings });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Settings PUT error:', error);
-    return NextResponse.json({ error: 'Failed to update settings' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to update settings' }, { status: 500 });
   }
 }

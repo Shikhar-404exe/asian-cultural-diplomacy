@@ -37,7 +37,7 @@ export default function AdminSettingsPage() {
         if (d.settings) {
           setSiteTitle(d.settings.siteTitle || '');
           setContactEmail(d.settings.contactEmail || '');
-          setNotificationEmail(d.settings.notificationEmail || '');
+          setNotificationEmail(d.settings.notificationEmail || d.settings.gmailUser || '');
           if (d.settings.gmailNotificationsEnabled !== undefined) {
             setGmailNotificationsEnabled(d.settings.gmailNotificationsEnabled);
           }
@@ -47,7 +47,9 @@ export default function AdminSettingsPage() {
           if (d.settings.notifyOnNewReader !== undefined) {
             setNotifyOnNewReader(d.settings.notifyOnNewReader);
           }
-          if (d.settings.notifyOnContactEnquiry !== undefined) {
+          if (d.settings.notifyOnNewEnquiry !== undefined) {
+            setNotifyOnContactEnquiry(d.settings.notifyOnNewEnquiry);
+          } else if (d.settings.notifyOnContactEnquiry !== undefined) {
             setNotifyOnContactEnquiry(d.settings.notifyOnContactEnquiry);
           }
         }
@@ -74,13 +76,14 @@ export default function AdminSettingsPage() {
           notifyOnContactEnquiry,
         }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
         setFeedback({ type: 'success', text: 'Site & notification settings updated successfully!' });
       } else {
-        setFeedback({ type: 'error', text: 'Failed to update settings.' });
+        setFeedback({ type: 'error', text: data.error || 'Failed to update settings.' });
       }
     } catch (e) {
-      setFeedback({ type: 'error', text: 'Connection issue.' });
+      setFeedback({ type: 'error', text: 'Connection issue. Please verify your internet connection.' });
     } finally {
       setSavingSettings(false);
     }
@@ -110,7 +113,7 @@ export default function AdminSettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setFeedback({ type: 'error', text: data.error || 'Failed to update password.' });
       } else {
@@ -120,7 +123,7 @@ export default function AdminSettingsPage() {
         setConfirmPassword('');
       }
     } catch (e) {
-      setFeedback({ type: 'error', text: 'Connection issue.' });
+      setFeedback({ type: 'error', text: 'Connection issue. Please check your network.' });
     } finally {
       setSavingPassword(false);
     }
@@ -341,7 +344,7 @@ export default function AdminSettingsPage() {
         </div>
 
         <p className="text-xs text-slate-600 leading-relaxed max-w-xl">
-          Download a verified timestamped snapshot of your SQLite database before making major structural updates or public deployment. The downloaded file contains all publications, categories, comments, and settings.
+          Download a verified timestamped JSON snapshot of your production database. The downloaded file contains all publications, categories, comments, settings, and media records.
         </p>
 
         <div className="pt-2">
@@ -351,7 +354,7 @@ export default function AdminSettingsPage() {
             className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-navy text-brand-ivory text-xs font-semibold transition-colors shadow-sm"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download Full Database Snapshot (.db)</span>
+            <span>Download Full Database Snapshot (.json)</span>
           </button>
         </div>
       </div>

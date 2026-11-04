@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
         title,
         subtitle: subtitle || null,
         slug,
-        coverImage: coverImage || '/art/founder-sister-bridge.jpg',
+        coverImage: coverImage || '/art/moon-bridge.jpg',
         content,
         categoryId,
         author: author || session.name || 'Founder & Director',

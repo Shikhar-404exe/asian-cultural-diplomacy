@@ -83,7 +83,7 @@ npm run test:e2e
 ```
 
 **100% Pass Rate (8/8 tests)**:
-1. Homepage branding, strategic pillars, sister artwork, and clean public navigation without admin links.
+1. Homepage branding, strategic pillars, architectural artwork, and clean public navigation without admin links.
 2. About page mission, vision, and intercultural philosophy.
 3. Respectful empty states on Publications, Events, and Meetups.
 4. Diplomatic contact form submission and automated enquiry alerts.

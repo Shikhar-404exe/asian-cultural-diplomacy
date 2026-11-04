@@ -59,8 +59,8 @@ async function cleanupAndSeed() {
   console.log(`Purged test audit logs: ${deletedLogs.count}`);
 
   // 5. Ensure Founder Admin User exists and is configured
-  const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalDiplomacy2026!';
+  const adminEmail = process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalShashwati@2026';
   const passwordHash = await bcrypt.hash(adminPassword, 12);
 
   await prisma.user.upsert({
@@ -108,7 +108,7 @@ async function cleanupAndSeed() {
       title: 'The Architecture of Dialogue: Building Bridges Across Asian Civilisations',
       slug: 'architecture-of-dialogue-building-bridges',
       subtitle: 'How traditional symbols of connection—from arched moon bridges to tea pavilions—illuminate the path for modern diplomatic exchange.',
-      coverImage: '/art/founder-sister-bridge.jpg',
+      coverImage: '/art/moon-bridge.jpg',
       categoryId: categories['diplomatic-essays'],
       author: 'Founder & Director',
       isPublished: true,
@@ -137,7 +137,7 @@ async function cleanupAndSeed() {
       title: 'Courtyards of Contemplation: Spatial Philosophy in Asian Diplomacy',
       slug: 'courtyards-of-contemplation-spatial-philosophy',
       subtitle: 'The architectural wisdom of traditional courtyards provides an enduring framework for bilateral restraint and dialogue.',
-      coverImage: '/art/founder-sister-courtyard.jpg',
+      coverImage: '/art/courtyard-pavilion.jpg',
       categoryId: categories['art-and-heritage'],
       author: 'Founder & Director',
       isPublished: true,
@@ -224,7 +224,7 @@ async function cleanupAndSeed() {
       title: 'Roundtable on Traditional Arts & Contemporary Statecraft',
       slug: 'roundtable-traditional-arts-statecraft',
       description: 'An intimate closed-door and public salon exploring how traditional aesthetic principles inform peaceful conflict resolution and cultural diplomacy.',
-      coverImage: '/art/founder-sister-courtyard.jpg',
+      coverImage: '/art/courtyard-pavilion.jpg',
       startDate: new Date('2026-07-05T14:00:00Z'),
       endDate: new Date('2026-07-05T18:00:00Z'),
       venue: 'National Museum of Asian Art, Pavilion Annex',
@@ -247,7 +247,7 @@ async function cleanupAndSeed() {
       title: 'Winter Salon: Asian Silk Routes & Shared Memory',
       slug: 'winter-salon-silk-routes-shared-memory',
       description: 'A completed commemorative evening celebrating literary and artistic transmissions along the historical land and maritime Silk Routes.',
-      coverImage: '/art/founder-sister-bridge.jpg',
+      coverImage: '/art/moon-bridge.jpg',
       startDate: new Date('2026-01-20T18:00:00Z'),
       endDate: new Date('2026-01-20T21:00:00Z'),
       venue: 'Central Heritage Library Gallery',
@@ -322,16 +322,16 @@ async function cleanupAndSeed() {
   // 10. Seed Media Items
   const mediaItems = [
     {
-      originalName: 'founder-sister-bridge.jpg',
-      fileName: 'founder-sister-bridge.jpg',
-      fileUrl: '/art/founder-sister-bridge.jpg',
+      originalName: 'moon-bridge.jpg',
+      fileName: 'moon-bridge.jpg',
+      fileUrl: '/art/moon-bridge.jpg',
       mimeType: 'image/jpeg',
       sizeBytes: 46027,
     },
     {
-      originalName: 'founder-sister-courtyard.jpg',
-      fileName: 'founder-sister-courtyard.jpg',
-      fileUrl: '/art/founder-sister-courtyard.jpg',
+      originalName: 'courtyard-pavilion.jpg',
+      fileName: 'courtyard-pavilion.jpg',
+      fileUrl: '/art/courtyard-pavilion.jpg',
       mimeType: 'image/jpeg',
       sizeBytes: 79780,
     },

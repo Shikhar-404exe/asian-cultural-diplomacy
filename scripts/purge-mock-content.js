@@ -23,6 +23,13 @@ async function purgeMockContent() {
   const delMeetups = await prisma.meetup.deleteMany({});
   console.log(`Deleted meetups: ${delMeetups.count}`);
 
+  const delTestUsers = await prisma.user.deleteMany({
+    where: {
+      email: { not: 'shashwatiprajapati@gmail.com' }
+    }
+  });
+  console.log(`Deleted non-founder users: ${delTestUsers.count}`);
+
   const finalCounts = {
     users: await prisma.user.count(),
     adminUsers: await prisma.adminUser.count(),

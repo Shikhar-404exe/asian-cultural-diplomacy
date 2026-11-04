@@ -23,8 +23,8 @@ test.describe('Visual Screenshot Capture for Production Audit', () => {
     await page.screenshot({ path: 'screenshots/05_admin_portal_login.png', fullPage: true });
 
     // 6. Admin Blog Editor with Cloud Autosave
-    await page.fill('input[type="email"]', 'founder@asianculturaldiplomacy.org');
-    await page.fill('input[type="password"]', 'CulturalDiplomacy2026!');
+    await page.fill('input[type="email"]', process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com');
+    await page.fill('input[type="password"]', process.env.ADMIN_PASSWORD || 'CulturalShashwati@2026');
     await page.click('button:has-text("Sign In to Dashboard")');
     await page.goto('/admin/blogs/new');
     await page.fill('input[placeholder*="The Architecture of Dialogue"]', 'Cultural Bridges in Modern Diplomacy');

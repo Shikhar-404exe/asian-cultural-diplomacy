@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { prisma } from '../src/lib/prisma';
 
 test.describe('Asian Cultural Diplomacy - Public Experience & Navigation Integrity', () => {
-  test('Homepage loads with branding, sister artwork, and clean public navigation', async ({ page }) => {
+  test('Homepage loads with branding, artwork, and clean public navigation', async ({ page }) => {
     await page.goto('/');
 
     await expect(page).toHaveTitle(/Asian Cultural Diplomacy/);
@@ -12,7 +12,7 @@ test.describe('Asian Cultural Diplomacy - Public Experience & Navigation Integri
     await expect(page.getByText('Pillar I', { exact: true })).toBeVisible();
     await expect(page.locator('text=Intercultural Philosophy & Scholarship')).toBeVisible();
 
-    // Verify Sister's Artwork
+    // Verify The Bridge of Dialogue
     await expect(page.locator('text=The Bridge of Dialogue').first()).toBeVisible();
 
     // CRITICAL SECURITY & UX: Verify public navigation contains ZERO admin/founder portal links
@@ -132,8 +132,8 @@ test.describe('Role Separation & Reader Authentication Experience', () => {
 });
 
 test.describe('Administrator Experience, Publishing & Management Synchronization', () => {
-  const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalDiplomacy2026!';
+  const adminEmail = process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalShashwati@2026';
   const testSuffix = Date.now().toString().slice(-5);
   const articleTitle = `Test Article Synergy ${testSuffix}`;
   const eventTitle = `Test Diplomatic Forum ${testSuffix}`;

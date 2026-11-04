@@ -54,9 +54,9 @@ Publishing an essay is as easy as using a word processor:
 2. **Title**: Enter the title of your essay (e.g., *"The Architecture of Dialogue"*).
 3. **Subtitle**: Enter a brief one-sentence summary to intrigue readers.
 4. **Category**: Choose the topic (e.g., *Diplomatic Essays*, *Art & Heritage*, or *Regional Dialogues*).
-5. **Cover Image**: You can click one of the quick preset buttons to use your sister's artwork:
-   - Click **Sister's Moon Bridge**
-   - Click **Sister's Courtyard Pavilion**
+5. **Cover Image**: You can click one of the quick preset buttons to select a cover image:
+   - Click **The Moon Bridge**
+   - Click **Courtyard Pavilion**
    - Click **Mount Fuji & Sakura**
    - Or paste an image link from your Media Library.
 6. **Featured Perspective**: Check the box if you want this article highlighted on your homepage hero.

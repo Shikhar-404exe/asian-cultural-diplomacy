@@ -49,7 +49,7 @@ export default async function SingleArticlePage({
     orderBy: { publishedAt: 'desc' },
   });
 
-  const cover = article.coverImage || '/art/founder-sister-bridge.jpg';
+  const cover = article.coverImage || '/art/moon-bridge.jpg';
 
   return (
     <article className="bg-architectural-grid min-h-screen py-12 sm:py-16">

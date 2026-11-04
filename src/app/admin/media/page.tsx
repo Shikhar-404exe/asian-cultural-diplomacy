@@ -90,7 +90,7 @@ export default function MediaLibraryPage() {
             Media Library
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Upload and access photographs, sister's artworks, and illustrations for your articles.
+            Upload and access photographs, artworks, and illustrations for your articles.
           </p>
         </div>
 

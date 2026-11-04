@@ -28,7 +28,7 @@ interface ArticleCardProps {
 }
 
 export default function ArticleCard({ article, featured = false }: ArticleCardProps) {
-  const cover = article.coverImage || '/art/founder-sister-bridge.jpg';
+  const cover = article.coverImage || '/art/moon-bridge.jpg';
 
   if (featured) {
     return (

@@ -37,7 +37,7 @@ export default function WriteBlogPage() {
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [coverImage, setCoverImage] = useState('/art/founder-sister-bridge.jpg');
+  const [coverImage, setCoverImage] = useState('/art/moon-bridge.jpg');
   const [content, setContent] = useState('');
   const [isFeatured, setIsFeatured] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -410,7 +410,7 @@ export default function WriteBlogPage() {
                   type="text"
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
-                  placeholder="/art/founder-sister-bridge.jpg"
+                  placeholder="/art/moon-bridge.jpg"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
                 />
               </div>
@@ -419,22 +419,22 @@ export default function WriteBlogPage() {
             {/* Quick Artwork Asset Picker */}
             <div className="pt-2">
               <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-2">
-                Quick Preset Cover Images (Founder Art & Photography):
+                Quick Preset Cover Images (Art &amp; Photography):
               </span>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={() => setCoverImage('/art/founder-sister-bridge.jpg')}
+                  onClick={() => setCoverImage('/art/moon-bridge.jpg')}
                   className="text-xs px-3 py-1.5 rounded-lg bg-brand-cream border border-brand-border hover:bg-brand-powder/60"
                 >
-                  Sister&apos;s Moon Bridge
+                  The Moon Bridge
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCoverImage('/art/founder-sister-courtyard.jpg')}
+                  onClick={() => setCoverImage('/art/courtyard-pavilion.jpg')}
                   className="text-xs px-3 py-1.5 rounded-lg bg-brand-cream border border-brand-border hover:bg-brand-powder/60"
                 >
-                  Sister&apos;s Courtyard Pavilion
+                  Courtyard Pavilion
                 </button>
                 <button
                   type="button"

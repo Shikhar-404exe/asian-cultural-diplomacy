@@ -65,7 +65,7 @@ export default function TipTapEditor({
   }
 
   const addImagePrompt = () => {
-    const url = window.prompt('Enter Image URL (e.g. /art/founder-sister-bridge.jpg or an uploaded image URL):');
+    const url = window.prompt('Enter Image URL (e.g. /art/moon-bridge.jpg or an uploaded image URL):');
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }

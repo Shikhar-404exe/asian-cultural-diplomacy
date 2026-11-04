@@ -51,7 +51,7 @@ This operation purges demonstration and placeholder records:
 PRESERVED:
   - Administrator account
   - Editorial categories
-  - Founder sister's artworks and media library
+  - Founder artworks and media library
   - Core site settings structure
 
 To preview records without modifying database:

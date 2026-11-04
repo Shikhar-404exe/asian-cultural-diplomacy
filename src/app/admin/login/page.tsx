@@ -6,8 +6,8 @@ import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, KeyRound } from 'luci
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('founder@asianculturaldiplomacy.org');
-  const [password, setPassword] = useState('CulturalDiplomacy2026!');
+  const [email, setEmail] = useState('shashwatiprajapati@gmail.com');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,14 +104,13 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Localhost Default Notice */}
+        {/* Authorised Access Notice */}
         <div className="mt-8 pt-6 border-t border-brand-border/60 bg-brand-powder/40 p-4 rounded-xl text-xs text-slate-600 space-y-1">
           <div className="flex items-center space-x-1.5 font-semibold text-brand-navy">
             <KeyRound className="w-3.5 h-3.5 text-brand-blue" />
-            <span>Localhost MVP Credentials:</span>
+            <span>Authorised Founder Portal:</span>
           </div>
-          <div><span className="font-mono text-brand-blue">founder@asianculturaldiplomacy.org</span></div>
-          <div><span className="font-mono text-slate-700">CulturalDiplomacy2026!</span></div>
+          <div><span className="font-mono text-brand-blue">shashwatiprajapati@gmail.com</span></div>
         </div>
 
       </div>

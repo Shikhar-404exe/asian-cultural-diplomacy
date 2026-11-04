@@ -52,8 +52,8 @@ test.describe('Responsive Layout & Visual Integrity Across Desktop/Laptop Viewpo
 
 test.describe('Admin Login Navigation Transition & Hook Order Resilience', () => {
   test('Admin login transitions smoothly to /admin without React error #300', async ({ page }) => {
-    const adminEmail = process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
-    const adminPassword = process.env.ADMIN_PASSWORD || '';
+    const adminEmail = process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalShashwati@2026';
 
     let consoleErrors: string[] = [];
     page.on('console', (msg) => {

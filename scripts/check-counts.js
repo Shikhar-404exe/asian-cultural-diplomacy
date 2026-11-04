@@ -15,6 +15,9 @@ async function check() {
   };
   console.log('Database Counts:', JSON.stringify(counts, null, 2));
 
+  const users = await prisma.user.findMany({ select: { id: true, email: true, role: true, name: true } });
+  console.log('Users in DB:', users);
+
   if (counts.articles > 0) {
     const articles = await prisma.article.findMany({ select: { id: true, title: true, slug: true } });
     console.log('Articles:', articles);

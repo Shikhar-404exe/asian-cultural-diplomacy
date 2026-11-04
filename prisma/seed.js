@@ -7,9 +7,9 @@ async function main() {
   console.log('Ensuring essential system configuration (Admin, Categories, Settings)...');
 
   // 1. Create or update Administrator
-  const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalDiplomacy2026!';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'CulturalShashwati@2026';
   const passwordHash = await bcrypt.hash(adminPassword, 12);
-  const adminEmail = (process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org').toLowerCase().trim();
+  const adminEmail = (process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com').toLowerCase().trim();
 
   // Primary User table
   await prisma.user.upsert({

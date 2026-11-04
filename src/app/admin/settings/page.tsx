@@ -209,7 +209,7 @@ export default function AdminSettingsPage() {
                 type="email"
                 value={notificationEmail}
                 onChange={(e) => setNotificationEmail(e.target.value)}
-                placeholder="founder@asianculturaldiplomacy.org"
+                placeholder="shashwatiprajapati@gmail.com"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-brand-ivory border border-brand-border/80 focus:outline-none focus:ring-2 focus:ring-brand-blue/40 text-sm"
               />
               <p className="text-[11px] text-slate-500 mt-1">

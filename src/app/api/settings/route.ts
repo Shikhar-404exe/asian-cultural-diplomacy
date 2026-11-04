@@ -22,7 +22,7 @@ export async function GET() {
           aboutAreasOfEngagement: '[]',
           aboutPhilosophy: 'Cultural diplomacy is an invitation to shared reflection.',
           gmailNotificationsEnabled: true,
-          gmailUser: process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org',
+          gmailUser: process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com',
           notifyOnNewComment: true,
           notifyOnNewReader: true,
           notifyOnNewEnquiry: true,

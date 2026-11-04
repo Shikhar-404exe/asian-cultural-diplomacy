@@ -71,8 +71,8 @@ export default async function AboutPage() {
         <section className="bg-brand-navy text-brand-ivory rounded-3xl overflow-hidden shadow-card grid grid-cols-1 lg:grid-cols-12">
           <div className="lg:col-span-5 relative min-h-[350px] lg:min-h-full">
             <Image
-              src="/art/founder-sister-courtyard.jpg"
-              alt="Courtyard of contemplation representing founder's scholarly space"
+              src="/art/courtyard-pavilion.jpg"
+              alt="Courtyard of contemplation representing scholarly space"
               fill
               className="object-cover object-center"
             />

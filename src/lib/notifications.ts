@@ -210,7 +210,7 @@ export function getNotificationRecipient(): string {
   return (
     process.env.FOUNDER_NOTIFICATION_EMAIL ||
     process.env.ADMIN_EMAIL ||
-    'founder@asianculturaldiplomacy.org'
+    'shashwatiprajapati@gmail.com'
   ).trim();
 }
 
@@ -220,7 +220,7 @@ export function getNotificationRecipient(): string {
  */
 async function sendNotificationEmail(payload: EmailPayload) {
   const transporter = createTransporter();
-  const fromAddress = process.env.GMAIL_USER || process.env.ADMIN_EMAIL || 'founder@asianculturaldiplomacy.org';
+  const fromAddress = process.env.GMAIL_USER || process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com';
 
   if (transporter) {
     try {

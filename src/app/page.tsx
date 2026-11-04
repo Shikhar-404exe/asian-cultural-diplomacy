@@ -117,13 +117,13 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Right Hero Column: Sister's Moon Bridge Artwork & Serene Visual Focus */}
+          {/* Right Hero Column: Symbolic Visual Focus */}
           <div className="lg:col-span-7 relative min-h-[400px] lg:min-h-full bg-brand-cream/40 flex items-center justify-center p-8 lg:p-12 overflow-hidden">
-            {/* Background Image of Sister's Artwork */}
+            {/* Background Image of Dialogue Bridge */}
             <div className="relative w-full h-[380px] sm:h-[480px] lg:h-[520px] rounded-2xl overflow-hidden shadow-card border border-brand-border/70">
               <Image
-                src="/art/founder-sister-bridge.jpg"
-                alt="The Bridge of Dialogue — Original watercolor artwork by the founder's sister"
+                src="/art/moon-bridge.jpg"
+                alt="The Bridge of Dialogue — Architectural Watercolor"
                 fill
                 priority
                 className="object-cover object-center"
@@ -132,7 +132,7 @@ export default async function HomePage() {
               
               {/* Artwork Annotation Pill */}
               <div className="absolute top-4 right-4 bg-brand-ivory/95 backdrop-blur-sm border border-brand-border/80 px-3.5 py-1.5 rounded-full text-[11px] font-semibold text-brand-navy shadow-sm">
-                Original Artwork: <span className="text-brand-blue font-serif italic">The Bridge of Dialogue</span>
+                Symbolic Motif: <span className="text-brand-blue font-serif italic">The Bridge of Dialogue</span>
               </div>
 
               {/* Serene Floating Statement */}
@@ -141,7 +141,7 @@ export default async function HomePage() {
                   "Like an arched bridge rising over reflective waters, diplomacy unites shores without erasing their unique beauty."
                 </div>
                 <div className="text-xs text-brand-sky uppercase tracking-widest font-sans font-semibold">
-                  Founder's Sister's Watercolor Reference
+                  Architectural Watercolor Motif
                 </div>
               </div>
             </div>
@@ -239,86 +239,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 5. EXPLORE CULTURAL PERSPECTIVES: ARTWORK INTEGRATION */}
-      <section className="py-24 max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <span className="text-xs uppercase tracking-widest font-semibold text-brand-blue">
-            Artistic Heritage
-          </span>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-navy mt-1">
-            Visual Harmony & The Founder's Sister's Art
-          </h2>
-          <p className="text-slate-600 text-sm sm:text-base mt-3">
-            Cultural diplomacy begins with shared aesthetic contemplation. These original artworks embody the foundational visual language of our platform.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-          
-          {/* Card 1: The Moon Bridge */}
-          <div className="bg-brand-ivory border border-brand-border/80 rounded-2xl overflow-hidden shadow-card p-6 flex flex-col justify-between">
-            <div className="relative h-72 w-full rounded-xl overflow-hidden mb-6">
-              <Image
-                src="/art/founder-sister-bridge.jpg"
-                alt="Watercolor Bridge and Glowing Lanterns"
-                fill
-                className="object-cover object-center hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-brand-blue mb-1">
-                Symbolic Motif • Intercultural Connection
-              </div>
-              <h3 className="font-serif text-2xl font-bold text-brand-navy mb-2">
-                The Arched Moon Bridge
-              </h3>
-              <p className="text-slate-700 text-sm leading-relaxed mb-4">
-                Traditional watercolor portraying the passage between two shores. The glowing lanterns reflect upon tranquil waters, mirroring the diplomatic hospitality that lights the path toward mutual understanding.
-              </p>
-              <Link
-                href="/about#philosophy"
-                className="inline-flex items-center space-x-1.5 text-xs font-semibold text-brand-blue hover:text-brand-navy"
-              >
-                <span>Read Philosophy</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-          {/* Card 2: The Courtyard & Peonies */}
-          <div className="bg-brand-ivory border border-brand-border/80 rounded-2xl overflow-hidden shadow-card p-6 flex flex-col justify-between">
-            <div className="relative h-72 w-full rounded-xl overflow-hidden mb-6">
-              <Image
-                src="/art/founder-sister-courtyard.jpg"
-                alt="Classical Courtyard and Blooming Peonies"
-                fill
-                className="object-cover object-center hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-wider text-brand-blue mb-1">
-                Classical Motif • Heritage Sanctuary
-              </div>
-              <h3 className="font-serif text-2xl font-bold text-brand-navy mb-2">
-                The Courtyard of Contemplation
-              </h3>
-              <p className="text-slate-700 text-sm leading-relaxed mb-4">
-                Traditional gongbi painting featuring jade-tiled pavilions, resilient bamboo groves, and flourishing peonies. It reminds us that sustainable diplomacy requires sanctuaries of quiet reflection.
-              </p>
-              <Link
-                href="/about#philosophy"
-                className="inline-flex items-center space-x-1.5 text-xs font-semibold text-brand-blue hover:text-brand-navy"
-              >
-                <span>Read Philosophy</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* 6. UPCOMING EVENTS */}
+      {/* 5. UPCOMING EVENTS */}
       <section className="py-20 bg-brand-powder/25 border-y border-brand-border/60">
         <div className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12">
@@ -359,7 +280,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 7. UPCOMING MEETUPS: FOUNDER PUBLIC APPEARANCES */}
+      {/* 6. UPCOMING MEETUPS: FOUNDER PUBLIC APPEARANCES */}
       <section className="py-24 max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12">
           <div>
@@ -402,7 +323,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* 8. MANIFESTO CALLOUT BANNER (Neo Mirai Reference Feature) */}
+      {/* 7. MANIFESTO CALLOUT BANNER (Neo Mirai Reference Feature) */}
       <section className="max-w-7xl 2xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pb-20">
         <div className="rounded-3xl bg-brand-navy text-brand-ivory overflow-hidden grid grid-cols-1 lg:grid-cols-12 shadow-elevated">
           
@@ -446,7 +367,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 9. CONTACT INVITATION */}
+      {/* 8. CONTACT INVITATION */}
       <section className="py-20 bg-brand-cream/60 border-t border-brand-border/70 text-center">
         <div className="max-w-2xl mx-auto px-4">
           <span className="text-xs uppercase tracking-widest font-semibold text-brand-blue">

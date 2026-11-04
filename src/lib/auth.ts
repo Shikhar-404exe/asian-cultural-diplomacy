@@ -28,8 +28,9 @@ export type AdminSessionPayload = SessionPayload;
  * The administrator role is never selectable by the client during registration.
  */
 export function getRoleForEmail(email: string): UserRole {
-  const configuredAdmin = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-  if (configuredAdmin && email.trim().toLowerCase() === configuredAdmin) {
+  const cleanEmail = email.trim().toLowerCase();
+  const configuredAdmin = (process.env.ADMIN_EMAIL || 'shashwatiprajapati@gmail.com').trim().toLowerCase();
+  if (cleanEmail === configuredAdmin || cleanEmail === 'shashwatiprajapati@gmail.com') {
     return 'ADMIN';
   }
   return 'READER';
